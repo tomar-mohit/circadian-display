@@ -14,14 +14,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -36,13 +33,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.circadiandisplay.app.util.minutesToTimeString
 import com.circadiandisplay.core.curve.DisplayMode
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DashboardScreen(
     viewModel: DashboardViewModel,
-    onNavigateToSettings: () -> Unit,
+    onNavigateToPreview: (Long) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -51,14 +49,6 @@ fun DashboardScreen(
         topBar = {
             TopAppBar(
                 title = { Text("Circadian Display") },
-                actions = {
-                    IconButton(onClick = onNavigateToSettings) {
-                        Icon(
-                            imageVector = Icons.Filled.Settings,
-                            contentDescription = "Settings",
-                        )
-                    }
-                },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surface,
                 ),
@@ -150,6 +140,13 @@ fun DashboardScreen(
                             style = MaterialTheme.typography.headlineSmall,
                             fontWeight = FontWeight.Bold,
                         )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        OutlinedButton(
+                            onClick = { state.activeProfileId?.let(onNavigateToPreview) },
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            Text("Preview curve")
+                        }
                     }
                 }
             } else {
@@ -280,10 +277,4 @@ private fun lerpColor(a: Color, b: Color, t: Float): Color {
         blue = a.blue + (b.blue - a.blue) * t,
         alpha = a.alpha + (b.alpha - a.alpha) * t,
     )
-}
-
-private fun minutesToTimeString(minutes: Int): String {
-    val hours = minutes / 60
-    val mins = minutes % 60
-    return "%02d:%02d".format(hours, mins)
 }

@@ -10,6 +10,7 @@ import com.circadiandisplay.core.curve.DisplayMode
 data class DashboardUiState(
     val isEnabled: Boolean = true,
     val activeProfileName: String? = null,
+    val activeProfileId: Long? = null,
     val hasActiveProfile: Boolean = false,
     val currentWarmth: Float = 0f,
     val currentDimming: Float = 0f,

@@ -73,4 +73,7 @@ class CurveRepository @Inject constructor(
 
     suspend fun deletePointById(id: Long) =
         pointDao.deleteById(id)
+
+    suspend fun replacePoints(profileId: Long, points: List<CurvePoint>) =
+        pointDao.replacePoints(profileId, points.map { it.toEntity() })
 }

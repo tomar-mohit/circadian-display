@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.circadiandisplay.app.data.repository.CurveRepository
 import com.circadiandisplay.app.data.settings.AppSettings
 import com.circadiandisplay.app.scheduler.SchedulerWorker
+import com.circadiandisplay.app.util.currentTimeMinutes
 import com.circadiandisplay.core.curve.CurveEngine
 import com.circadiandisplay.core.curve.DisplayController
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -17,7 +18,6 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import java.util.Calendar
 import javax.inject.Inject
 
 @HiltViewModel
@@ -45,6 +45,7 @@ class DashboardViewModel @Inject constructor(
                     DashboardUiState(
                         isEnabled = isEnabled,
                         activeProfileName = profile.name,
+                        activeProfileId = profile.id,
                         hasActiveProfile = true,
                         currentWarmth = displayState.warmth,
                         currentDimming = displayState.dimming,
@@ -79,11 +80,6 @@ class DashboardViewModel @Inject constructor(
             // for the next periodic WorkManager cycle
             SchedulerWorker.triggerNow(application)
         }
-    }
-
-    private fun currentTimeMinutes(): Int {
-        val cal = Calendar.getInstance()
-        return cal.get(Calendar.HOUR_OF_DAY) * 60 + cal.get(Calendar.MINUTE)
     }
 }
 

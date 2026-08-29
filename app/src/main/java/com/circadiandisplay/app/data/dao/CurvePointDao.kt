@@ -5,6 +5,7 @@ import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Transaction
 import androidx.room.Update
 import com.circadiandisplay.app.data.entity.CurvePointEntity
 import kotlinx.coroutines.flow.Flow
@@ -32,4 +33,17 @@ interface CurvePointDao {
 
     @Query("DELETE FROM curve_points WHERE id = :id")
     suspend fun deleteById(id: Long)
+
+    @Query("DELETE FROM curve_points WHERE profile_id = :profileId")
+    suspend fun deleteByProfileId(profileId: Long)
+
+    /**
+     * Atomically replaces all points for a profile with [points].
+     * Used by the Curve Editor to persist a full draft in one transaction.
+     */
+    @Transaction
+    suspend fun replacePoints(profileId: Long, points: List<CurvePointEntity>) {
+        deleteByProfileId(profileId)
+        insertAll(points)
+    }
 }
