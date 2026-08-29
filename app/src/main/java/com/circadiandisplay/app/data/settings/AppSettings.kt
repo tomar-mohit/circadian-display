@@ -22,7 +22,11 @@ private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(na
  * Flat key-value settings backed by Jetpack DataStore (Preferences).
  *
  * Stores app-level configuration that has no relational structure:
- * display mode, master toggle, active profile ID, and diagnostics.
+ * display mode, master toggle, and diagnostics.
+ *
+ * The active profile is deliberately **not** tracked here — it lives in Room as
+ * `CurveProfile.isActive`. A single source of truth avoids the two drifting out
+ * of sync when a profile is activated, deleted, or seeded.
  */
 @Singleton
 class AppSettings @Inject constructor(
@@ -31,7 +35,6 @@ class AppSettings @Inject constructor(
     private object Keys {
         val MODE = stringPreferencesKey("mode")
         val IS_ENABLED = booleanPreferencesKey("is_enabled")
-        val ACTIVE_PROFILE_ID = longPreferencesKey("active_profile_id")
         val LAST_EVALUATED_AT = longPreferencesKey("last_evaluated_at")
     }
 
@@ -65,21 +68,6 @@ class AppSettings @Inject constructor(
 
     suspend fun setEnabled(enabled: Boolean) {
         context.dataStore.edit { it[Keys.IS_ENABLED] = enabled }
-    }
-
-    // ── Active Profile ────────────────────────────────────────────────────
-
-    val activeProfileId: Flow<Long> = context.dataStore.data.map { prefs ->
-        prefs[Keys.ACTIVE_PROFILE_ID] ?: -1L
-    }
-
-    suspend fun getActiveProfileIdSnapshot(): Long {
-        val prefs = context.dataStore.data.first()
-        return prefs[Keys.ACTIVE_PROFILE_ID] ?: -1L
-    }
-
-    suspend fun setActiveProfileId(id: Long) {
-        context.dataStore.edit { it[Keys.ACTIVE_PROFILE_ID] = id }
     }
 
     // ── Diagnostics ───────────────────────────────────────────────────────

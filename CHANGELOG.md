@@ -30,6 +30,10 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - `.editorconfig` for consistent code formatting across editors.
 - Instrumented test dependencies (AndroidX Test, Compose UI Test, Room Testing, WorkManager Testing).
 - MockK and Robolectric dependencies for unit testing Android-dependent code.
+- Native Mode (`system:native` module): `NativeDisplayController` using `ColorDisplayManager` reflection with a `Settings.Secure` fallback, gated by `WRITE_SECURE_SETTINGS` (see Decision 008).
+- Runtime display-mode routing via `CompositeDisplayController`, switching between overlay and native controllers based on the `mode` setting.
+- Settings screen: Overlay/Native mode selector, overlay-permission and battery-optimization status with grant actions, and version/ADB instructions.
+- Top-level navigation (`AppNavHost`) with Dashboard and Settings destinations.
 
 ### Fixed
 - `settings.gradle.kts`: Fixed `dependencyResolution` → `dependencyResolutionManagement` (build-breaking typo).
@@ -39,10 +43,12 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - ProGuard rules expanded to cover Coroutines, WorkManager, and domain model preservation.
 - `ARCHITECTURE.md`: Removed `mode` from `DisplayState` documentation to match implementation (mode is determined by settings, not by the curve).
 - `ARCHITECTURE.md`: Data flow sequence diagram updated to include `points` parameter in `calculateDisplayState` call and remove `mode` from return value.
+- Overlay dimming now darkens the screen (black layer) instead of washing it out; warmth and dimming are applied as independent layers.
 
 ### Changed
 - CI pipeline now runs `ktlintCheck` and `detekt` before build.
 - `.gitignore` now excludes `docs/Internal/` meta content.
+- Active profile is now tracked solely via `CurveProfile.isActive` in Room; the redundant `active_profile_id` DataStore key was removed.
 
 ---
 

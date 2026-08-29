@@ -20,22 +20,33 @@ import javax.inject.Singleton
 /**
  * Applies warmth and dimming via a full-screen software overlay using [WindowManager].
  *
- * The overlay is a single full-screen [View] that sits on top of all other windows
- * but does not consume touch events. Warmth is mapped to an amber color filter;
- * dimming is mapped to the overlay's alpha (opacity).
+ * The overlay is two stacked full-screen [View]s that sit on top of all other
+ * windows but do not consume touch events. One layer carries the warmth tint
+ * (amber) and the other carries the dimming (black).
  *
  * Requires [android.permission.SYSTEM_ALERT_WINDOW]. The caller (app module)
  * is responsible for checking and requesting this permission before calling [apply].
  *
  * ## Color mapping
  *
- * Warmth 0.0 → neutral transparent gray (no visible effect).
- * Warmth 1.0 → deep amber (#FFB300) at full intensity.
- * Intermediate values are linearly interpolated.
+ * Two independent full-screen layers are stacked:
  *
- * Dimming does not change the overlay color — it only adjusts alpha.
- * Dimming 0.0 → overlay is fully transparent.
- * Dimming 1.0 → overlay is fully opaque at the current warmth color.
+ * - **Dimming layer** (bottom): opaque black with alpha = [DisplayState.dimming].
+ *   Dimming 0.0 → fully transparent (no effect), 1.0 → fully opaque black.
+ * - **Warmth layer** (top): amber (#FFB300) with alpha scaled by
+ *   [DisplayState.warmth] up to [MAX_WARMTH_ALPHA]. Warmth 0.0 → fully
+ *   transparent (no effect), 1.0 → amber at maximum tint strength.
+ *
+ * Each layer's opacity is driven solely by its own value, so warmth and
+ * dimming are fully independent: dimming darkens without washing out the
+ * screen, and warmth tints without being suppressed by low dimming.
+ *
+ * ## Note on warmth strength
+ *
+ * A WindowManager overlay can only *add* color on top of the screen; it cannot
+ * shift color temperature like Android's native night-display path. To keep the
+ * screen readable at maximum warmth, the amber layer's opacity is capped at
+ * [MAX_WARMTH_ALPHA].
  */
 @Singleton
 class OverlayDisplayController @Inject constructor(
@@ -47,7 +58,8 @@ class OverlayDisplayController @Inject constructor(
 
     private val mainHandler = Handler(Looper.getMainLooper())
 
-    private var overlayView: View? = null
+    private var dimmingView: View? = null
+    private var warmthView: View? = null
 
     override fun apply(state: DisplayState) {
         if (!isSupported()) {
@@ -73,30 +85,35 @@ class OverlayDisplayController @Inject constructor(
         val warmth = state.warmth.coerceIn(0f, 1f)
         val dimming = state.dimming.coerceIn(0f, 1f)
 
-        val color = lerpColor(NEUTRAL_COLOR, AMBER_COLOR, warmth)
+        val dimmingColor = Color.argb((dimming * 255).toInt(), 0, 0, 0)
+        val warmthColor = Color.argb(
+            (warmth * MAX_WARMTH_ALPHA * 255).toInt(),
+            AMBER_RED,
+            AMBER_GREEN,
+            AMBER_BLUE,
+        )
 
-        val view = getOrCreateOverlay()
-        view.setBackgroundColor(color)
-        view.alpha = dimming
+        getOrCreateDimmingView().setBackgroundColor(dimmingColor)
+        getOrCreateWarmthView().setBackgroundColor(warmthColor)
     }
 
     private fun clearOnMainThread() {
-        overlayView?.let { view ->
-            try {
-                windowManager.removeView(view)
-            } catch (_: IllegalArgumentException) { }
-        }
-        overlayView = null
+        dimmingView?.let { removeViewSafely(it) }
+        warmthView?.let { removeViewSafely(it) }
+        dimmingView = null
+        warmthView = null
     }
 
     // ── Internals ─────────────────────────────────────────────────────────
 
-    private fun getOrCreateOverlay(): View {
-        overlayView?.let { return it }
+    private fun getOrCreateDimmingView(): View =
+        dimmingView ?: createOverlayView().also { dimmingView = it }
 
+    private fun getOrCreateWarmthView(): View =
+        warmthView ?: createOverlayView().also { warmthView = it }
+
+    private fun createOverlayView(): View {
         val view = View(context)
-        view.setBackgroundColor(NEUTRAL_COLOR)
-        view.alpha = 0f
 
         val layoutType = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
@@ -120,24 +137,29 @@ class OverlayDisplayController @Inject constructor(
         params.y = 0
 
         windowManager.addView(view, params)
-        overlayView = view
         return view
     }
 
-    private fun lerpColor(from: Int, to: Int, t: Float): Int {
-        val r = Color.red(from) + ((Color.red(to) - Color.red(from)) * t).toInt()
-        val g = Color.green(from) + ((Color.green(to) - Color.green(from)) * t).toInt()
-        val b = Color.blue(from) + ((Color.blue(to) - Color.blue(from)) * t).toInt()
-        return Color.rgb(r, g, b)
+    private fun removeViewSafely(view: View) {
+        try {
+            windowManager.removeView(view)
+        } catch (_: IllegalArgumentException) { }
     }
 
     companion object {
         private const val TAG = "OverlayDisplayCtrl"
 
-        /** Neutral transparency — used when warmth is 0.0. */
-        private const val NEUTRAL_COLOR = 0x00FFFFFF.toInt()
+        /**
+         * Maximum opacity of the warmth layer. At warmth 1.0 the amber tint is
+         * strong but still translucent, keeping the screen readable. A purely
+         * additive overlay cannot shift color temperature like the native path,
+         * so this cap approximates a comfortable maximum warm tint.
+         */
+        private const val MAX_WARMTH_ALPHA = 0.5f
 
-        /** Deep amber at warmth 1.0. */
-        private const val AMBER_COLOR = 0xFFFFB300.toInt()
+        /** Amber tint RGB channels (#FFB300) for the warmth layer. */
+        private const val AMBER_RED = 0xFF
+        private const val AMBER_GREEN = 0xB3
+        private const val AMBER_BLUE = 0x00
     }
 }

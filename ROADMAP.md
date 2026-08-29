@@ -14,7 +14,7 @@ Deliverables:
 * Code style rules
 
 Status:
-Current
+Done
 
 ---
 
@@ -33,6 +33,9 @@ Features:
 Success Criteria:
 Given any time of day, the engine returns warmth and dimming values.
 
+Status:
+Done
+
 ---
 
 ## Phase 2 - Scheduler
@@ -48,6 +51,9 @@ Features:
 
 Success Criteria:
 Display state updates automatically.
+
+Status:
+Done
 
 ---
 
@@ -65,6 +71,9 @@ Features:
 Success Criteria:
 User can visually observe changes.
 
+Status:
+Done
+
 ---
 
 ## Phase 4 - Native Mode
@@ -80,6 +89,9 @@ Features:
 Success Criteria:
 User can switch modes.
 
+Status:
+Done
+
 ---
 
 ## Phase 5 - User Experience
@@ -93,6 +105,9 @@ Features:
 
 Success Criteria:
 App is usable by non-technical users.
+
+Status:
+In progress
 
 ---
 
@@ -109,6 +124,9 @@ Distribution:
 * GitHub Releases
 * Internal testing
 
+Status:
+Not started
+
 ---
 
 ## Phase 7 - Public Release
@@ -123,6 +141,9 @@ Goals:
 * Community feedback
 * Contributors
 * Issue reports
+
+Status:
+Not started
 
 ---
 

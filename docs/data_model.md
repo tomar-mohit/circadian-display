@@ -86,8 +86,9 @@ These are Preferences DataStore keys. They are flat, independent values with no 
 |---|---|---|---|
 | `mode` | `String` (enum name) | `"OVERLAY"` | Active display mode: `"OVERLAY"` or `"NATIVE"`. Stored as a string for human-readable DataStore inspection. Parsed to `DisplayMode` enum on read. |
 | `is_enabled` | `Boolean` | `true` | Master on/off toggle. When `false`, the scheduler runs but always calls `DisplayController.clear()`. |
-| `active_profile_id` | `Long` | `-1` | ID of the active `CurveProfile`. `-1` means no profile is selected. The scheduler treats `-1` as a disabled state. |
 | `last_evaluated_at` | `Long` | `0` | Unix timestamp (ms) of the last successful scheduler evaluation. Used in the dashboard to show "last updated" status and in diagnostics. |
+
+> **Note:** The active profile is **not** a DataStore key. It is tracked via the `CurveProfile.is_active` column (see the Room entity above), which is the single source of truth. There is no separate `active_profile_id` setting.
 
 ---
 

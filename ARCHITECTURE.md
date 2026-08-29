@@ -18,7 +18,7 @@ See [Decision 005](DECISIONS.md) for rationale over Koin and manual DI.
 
 ### Persistence
 - **Room** — relational storage for `CurveProfile` and `CurvePoint` entities (one-to-many relationship).
-- **Jetpack DataStore (Preferences)** — flat key-value storage for app-level settings (active profile ID, mode, enabled state).
+- **Jetpack DataStore (Preferences)** — flat key-value storage for app-level settings (mode, enabled state, diagnostics). The active profile is tracked in Room via `CurveProfile.isActive`.
 
 See [Decision 004](DECISIONS.md) for rationale.
 
@@ -114,14 +114,14 @@ sequenceDiagram
     participant Screen
 
     WM->>SS: Trigger periodic work (~15 min)
-    SS->>SR: getEnabledState() + getActiveProfileId()
-    SR-->>SS: isEnabled, profileId
+        SS->>SR: getEnabledState()
+    SR-->>SS: isEnabled
 
     alt isEnabled = false
         SS->>DC: clear()
         DC->>Screen: Remove all filters
     else isEnabled = true
-                SS->>R: loadProfile(profileId)
+                SS->>R: loadActiveProfile()
         R-->>SS: CurveProfile + CurvePoints
         SS->>CE: calculateDisplayState(profile, points, currentTimeMinutes)
         CE-->>SS: DisplayState(warmth, dimming)
@@ -272,7 +272,6 @@ The correct implementation is selected at runtime based on user preference (`Dis
 |---|---|---|---|
 | `mode` | `DisplayMode` | `OVERLAY` | Active display mode. |
 | `isEnabled` | `Boolean` | `true` | Master on/off switch. |
-| `activeProfileId` | `Long` | `-1` (none) | ID of the active `CurveProfile`. `-1` means no profile selected. |
 | `lastEvaluatedAt` | `Long` | `0` | Unix timestamp (ms) of the last scheduler evaluation. Used for diagnostics. |
 
 ---

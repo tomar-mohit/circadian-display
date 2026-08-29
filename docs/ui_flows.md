@@ -58,7 +58,7 @@ Preview Mode is a modal overlay launched from within the Curve Editor or from th
 | Edit curve shortcut | Button linking directly to the Curve Editor for the active profile. |
 | Preview button | Opens Preview Mode for the active profile. |
 
-**Empty state:** If no profile is active (`active_profile_id = -1`), show a prompt to create or select a profile. The master toggle is disabled in this state.
+**Empty state:** If no profile is active (no `CurveProfile` row with `is_active = 1`), show a prompt to create or select a profile. The master toggle is disabled in this state.
 
 **UiState fields:**
 ```
@@ -121,7 +121,7 @@ isSaving: Boolean
 
 **Empty state:** "No profiles yet. Create your first evening curve."
 
-**Confirmation on delete:** Deleting a profile that is currently active asks the user to confirm. After deletion, `active_profile_id` is reset to `-1`.
+**Confirmation on delete:** Deleting a profile that is currently active asks the user to confirm. After deletion, no profile remains active (all `is_active` flags are cleared).
 
 ---
 

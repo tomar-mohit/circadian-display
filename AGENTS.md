@@ -24,8 +24,8 @@ native color temperature APIs.
 | Phase 1 — Core Curve Engine (`CurveEngine` + domain models) | ✅ Done |
 | Phase 2 — Scheduler (WorkManager background evaluation) | ✅ Done |
 | Phase 3 — Overlay Mode (`OverlayDisplayController`) | ✅ Done |
-| Phase 4 — Native Mode (`NativeDisplayController`) | 🔜 Next |
-| Phase 5 — Curve Editor UI | 🔜 Future |
+| Phase 4 — Native Mode (`NativeDisplayController`) | ✅ Done |
+| Phase 5 — Curve Editor UI | 🟡 Partial (Dashboard + Settings done; Curve Editor / Profiles / Preview missing) |
 | Phase 6 — App Exclusions | 🔜 Future |
 
 ---
@@ -41,15 +41,16 @@ circadian-display/
 │       ├── data/repository/          # CurveRepository
 │       ├── data/settings/            # AppSettings (DataStore)
 │       ├── data/seed/                # SeedData (first-launch defaults)
-│       ├── di/                       # Hilt modules (DatabaseModule, CurveModule, DisplayControllerModule)
+│       ├── di/                       # Hilt modules + CompositeDisplayController (mode routing)
 │       ├── scheduler/                # SchedulerWorker + BootReceiver
-│       └── ui/dashboard/             # DashboardScreen + DashboardViewModel + DashboardUiState
+│       └── ui/                       # AppNavHost, dashboard/, settings/
 ├── core/
 │   └── curve/                        # Pure Kotlin: CurveEngine, CurvePoint, CurveProfile,
 │       │                             #   DisplayState, DisplayMode, DisplayController (interface)
 │       └── src/test/                 # CurveEngineTest (100% coverage)
 ├── system/
-│   └── overlay/                      # OverlayDisplayController (WindowManager full-screen overlay)
+│   ├── overlay/                      # OverlayDisplayController (WindowManager full-screen overlay)
+│   └── native/                       # NativeDisplayController (ColorDisplayManager reflection)
 └── gradle/
     └── libs.versions.toml            # Version catalog
 ```
@@ -72,7 +73,7 @@ circadian-display/
 - **CurvePointDao.kt** — `getByProfileId(): Flow`, `getByProfileIdOnce(): List`, CRUD.
 - **AppDatabase.kt** — Room DB, version 1, exports schema to `app/schemas/`.
 - **CurveRepository.kt** — Bridges DAOs ↔ domain models. Handles entity mapping.
-- **AppSettings.kt** — DataStore (Preferences): `isEnabled`, `displayMode`, `activeProfileId`, `lastEvaluatedAt`. Exposes both `Flow` and `suspend Snapshot()` methods.
+- **AppSettings.kt** — DataStore (Preferences): `isEnabled`, `displayMode`, `lastEvaluatedAt`. Exposes both `Flow` and `suspend Snapshot()` methods. The active profile is tracked in Room via `CurveProfile.isActive`, not here.
 - **SeedData.kt** — Inserts "Evening" profile with 4 points (18:00→23:00) on first launch.
 - **SchedulerWorker.kt** — `@HiltWorker`, `CoroutineWorker`. Runs every ~15 min. Companion: `enqueuePeriodic()`, `triggerNow()`, `cancelAll()`.
 - **BootReceiver.kt** — Re-enqueues periodic work on `BOOT_COMPLETED`.
@@ -80,15 +81,19 @@ circadian-display/
 ### DI (`app/di`)
 - **DatabaseModule.kt** — Provides `AppDatabase`, `CurveProfileDao`, `CurvePointDao`.
 - **CurveModule.kt** — Provides `CurveEngine` as singleton.
-- **DisplayControllerModule.kt** — Binds `DisplayController` → `OverlayDisplayController`.
+- **DisplayControllerModule.kt** — Binds `DisplayController` → `CompositeDisplayController`.
+- **CompositeDisplayController.kt** — `@Singleton`. Resolves the active `DisplayController` from the `mode` setting and delegates `apply`/`clear`/`isSupported`.
 
-### UI (`app/ui/dashboard`)
-- **DashboardUiState.kt** — Immutable state: `isEnabled`, `activeProfileName`, `currentWarmth`, `currentDimming`, `activeMode`, `currentTimeMinutes`, etc.
-- **DashboardViewModel.kt** — `@HiltViewModel`. Combines `AppSettings.isEnabled` + `AppSettings.displayMode` + `CurveRepository.observeActiveProfile()` → computes `DashboardUiState`. `toggleEnabled()` triggers `SchedulerWorker.triggerNow()`.
-- **DashboardScreen.kt** — Compose UI: master toggle card, warmth/dimming indicators, current time, mode badge.
+### UI (`app/ui`)
+- **AppNavHost.kt** — Top-level navigation: Dashboard (home) and Settings.
+- **dashboard/DashboardUiState.kt** — Immutable state: `isEnabled`, `activeProfileName`, `currentWarmth`, `currentDimming`, `activeMode`, `currentTimeMinutes`, etc.
+- **dashboard/DashboardViewModel.kt** — `@HiltViewModel`. Combines `AppSettings.isEnabled` + `AppSettings.displayMode` + `CurveRepository.observeActiveProfile()` → computes `DashboardUiState`. `toggleEnabled()` triggers `SchedulerWorker.triggerNow()`.
+- **dashboard/DashboardScreen.kt** — Compose UI: master toggle card, warmth/dimming indicators, current time, mode badge.
+- **settings/SettingsViewModel.kt / SettingsScreen.kt** — Display mode selector (Overlay/Native), overlay + battery-optimization permission status and grant actions, version info.
 
-### Overlay (`system/overlay`)
-- **OverlayDisplayController.kt** — `@Singleton`. Creates full-screen `View` via `WindowManager`. Uses `Handler(Looper.getMainLooper())` to dispatch to main thread. Warmth → amber tint (`lerpColor`), dimming → `view.alpha`. Requires `SYSTEM_ALERT_WINDOW`.
+### Display controllers (`system/*`)
+- **OverlayDisplayController.kt** (`system/overlay`) — `@Singleton`. Two stacked full-screen `View`s via `WindowManager`: a black dimming layer (alpha = dimming) and an amber warmth layer (alpha capped at `MAX_WARMTH_ALPHA`). Uses `Handler(Looper.getMainLooper())` to dispatch to main thread. Requires `SYSTEM_ALERT_WINDOW`.
+- **NativeDisplayController.kt** (`system/native`) — `@Singleton`. Applies warmth via `ColorDisplayManager` hidden APIs (reflection) with `Settings.Secure` fallback. Requires API 29+ and `WRITE_SECURE_SETTINGS` (Decision 008). Dimming is not applied in native mode.
 
 ---
 
@@ -143,14 +148,21 @@ $env:JAVA_HOME = 'C:\Program Files\Android\Android Studio\jbr'
 
 3. **`xmlns:tools`** must be on `<manifest>` root element, not on child elements.
 
+4. **Overlay dimming semantics** — `OverlayDisplayController` originally used a single view with a white neutral color and `view.alpha = dimming`, which washed the screen out (not darkening) and coupled warmth to dimming. Replaced with two independent layers: black (dimming) + amber (warmth, opacity capped).
+
+5. **Active-profile single source of truth** — Removed the orphaned `active_profile_id` DataStore key. The active profile is tracked solely via `CurveProfile.isActive` in Room.
+
 ---
 
 ## What's Running Right Now
 
 - App launches → seeds "Evening" profile (18:00–23:00) if empty
 - Dashboard shows warmth/dimming values (0% at noon, ramps to 100% warmth / 50% dimming at 23:00)
-- Scheduler evaluates every ~15 min + immediately on launch + on toggle
-- OverlayDisplayController creates/updates the overlay when evaluated
+- Scheduler evaluates every ~15 min + immediately on launch, on toggle, and on mode switch
+- `CompositeDisplayController` routes evaluation to the overlay or native controller based on the `mode` setting
+- OverlayDisplayController draws two independent layers (amber warmth + black dimming)
+- NativeDisplayController drives the system night-display temperature when `WRITE_SECURE_SETTINGS` is granted
+- Settings screen lets the user pick Overlay/Native mode and manage overlay + battery permissions
 - BootReceiver re-enqueues after reboot
 - Toggle switch triggers immediate re-evaluation
 
@@ -158,10 +170,10 @@ $env:JAVA_HOME = 'C:\Program Files\Android\Android Studio\jbr'
 
 ## What's Next
 
-1. **Overlay permission UX** — Check `SYSTEM_ALERT_WINDOW` before applying, show rationale dialog.
-2. **Battery optimization exemption** — Guide user to disable for reliability.
-3. **Curve Editor UI** — Create/edit/delete profiles and points.
-4. **Native Mode** — `NativeDisplayController` using `ColorDisplayManager` reflection (see Decision 008).
-5. **App Exclusions** — Pause overlay for specific foreground apps.
+1. **Curve Editor UI** — Create/edit/delete profiles and points (the core remaining Phase 5 work).
+2. **Profiles List** — Activate/rename/delete profiles.
+3. **Preview Mode** — Simulate any time of day against the active curve.
+4. **App Exclusions** — Pause overlay for specific foreground apps (`QUERY_ALL_PACKAGES` already declared).
+5. **Last-updated timestamp** — Surface `lastEvaluatedAt` on the Dashboard.
 6. **Extract `core/scheduler` module** — Move SchedulerWorker out of `app`.
 7. **Extract `core/settings` module** — Move AppSettings out of `app`.

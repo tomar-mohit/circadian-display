@@ -74,10 +74,13 @@ circadian-display/
 │       ├── data/repository/       # Repositories
 │       ├── data/settings/         # DataStore (AppSettings)
 │       ├── data/seed/             # Default seed data
-│       ├── di/                    # Hilt modules
-│       └── ui/dashboard/          # Dashboard screen
+│       ├── di/                    # Hilt modules + CompositeDisplayController
+│       └── ui/                    # AppNavHost, dashboard/, settings/
 ├── core/
 │   └── curve/                    # Pure Kotlin: CurveEngine, domain models
+├── system/
+│   ├── overlay/                  # OverlayDisplayController
+│   └── native/                   # NativeDisplayController
 └── gradle/
     └── libs.versions.toml        # Version catalog
 ```

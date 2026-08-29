@@ -65,8 +65,7 @@ class SchedulerWorker @AssistedInject constructor(
             return
         }
 
-        // 2. Find the active profile
-        val activeProfileId = appSettings.getActiveProfileIdSnapshot()
+        // 2. Find the active profile (tracked in Room via CurveProfile.isActive)
         val profile = curveRepository.getActiveProfile()
         if (profile == null) {
             Log.d(TAG, "No active profile — clearing display")
