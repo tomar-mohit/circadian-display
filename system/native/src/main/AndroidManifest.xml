@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!--
+        Native Mode requires WRITE_SECURE_SETTINGS to access ColorDisplayManager
+        hidden APIs or write directly to Settings.Secure night display keys.
+
+        This permission CANNOT be granted via runtime dialog — it must be granted
+        via ADB by the user:
+
+            adb shell pm grant com.circadiandisplay.app android.permission.WRITE_SECURE_SETTINGS
+
+        See DECISIONS.md Decision 008 for the full rationale.
+    -->
+
+</manifest>

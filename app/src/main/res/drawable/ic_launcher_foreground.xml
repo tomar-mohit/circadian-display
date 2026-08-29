@@ -1,0 +1,18 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Crescent moon representing the circadian/evening theme -->
+    <path
+        android:fillColor="#E8C547"
+        android:pathData="M64,36
+                          m0,-20
+                          a20,20 0 1,0 0,40
+                          a14,14 0 1,1 0,-40
+                          z" />
+    <!-- Small horizon line -->
+    <path
+        android:fillColor="#E8C547"
+        android:pathData="M28,78 L80,78 L80,82 L28,82 z" />
+</vector>

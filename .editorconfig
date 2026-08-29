@@ -1,0 +1,30 @@
+﻿# EditorConfig - https://editorconfig.org
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+indent_style = space
+indent_size = 4
+insert_final_newline = true
+trim_trailing_whitespace = true
+max_line_length = 120
+
+[*.{kt,kts}]
+# ktlint rules
+ktlint_standard_no-wildcard-imports = enabled
+ktlint_standard_import-ordering = enabled
+ktlint_standard_filename = enabled
+ktlint_standard_no-semi = enabled
+ktlint_standard_no-empty-class-body = enabled
+ktlint_standard_no-consecutive-comments = disabled
+ktlint_standard_multiline-expression = enabled
+
+[*.{xml,json,yml,yaml,md}]
+indent_size = 2
+
+[*.{toml,properties}]
+indent_size = 2
+
+[Makefile]
+indent_style = tab

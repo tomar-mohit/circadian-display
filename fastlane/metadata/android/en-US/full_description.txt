@@ -1,0 +1,10 @@
+Circadian Display continuously adjusts your screen's warmth and brightness throughout the evening based on customizable curves you define. Unlike standard night light solutions with fixed on/off schedules, Circadian Display provides a smooth, gradual transition tailored to your preferences.
+
+Features:
+- Dynamic comfort curves with precise warmth and dimming levels over time
+- Dual-engine modes: Native (system-level) and Overlay (software-based, works on all devices)
+- Background scheduler for automatic, hands-free operation
+- App exclusions: temporarily disable tinting for cameras, photo editors, and games
+- Simulation mode: preview your transitions across a 24-hour timeline
+- Privacy-first: completely offline, tracker-free, no data collection
+- Open source (Apache 2.0)

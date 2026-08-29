@@ -1,0 +1,73 @@
+# Detekt configuration for Circadian Display
+# https://detekt.dev/docs/introduction/configurations
+
+build:
+  maxIssues: 0
+
+complexity:
+  active: true
+  LongMethod:
+    active: true
+    threshold: 60
+  LongParameterList:
+    active: true
+    functionThreshold: 6
+    constructorThreshold: 7
+  ComplexCondition:
+    active: true
+    threshold: 4
+  CyclomaticComplexMethod:
+    active: true
+    threshold: 15
+  TooManyFunctions:
+    active: false  # Disabled — ViewModels and Repositories naturally accumulate functions
+
+empty-blocks:
+  active: true
+
+exceptions:
+  active: true
+  SwallowedException:
+    active: false  # We handle exceptions deliberately in some paths
+
+naming:
+  active: true
+  FunctionNaming:
+    active: true
+    functionPattern: '([a-z][a-zA-Z0-9]*)|(`.*`)'
+  TopLevelPropertyNaming:
+    active: true
+    constantPattern: '[A-Z][A-Za-z0-9]*'
+  VariableNaming:
+    active: true
+    variablePattern: '[a-z][A-Za-z0-9]*'
+
+performance:
+  active: true
+  ForEachOnRange:
+    active: true
+  SpreadOperator:
+    active: true
+
+potential-bugs:
+  active: true
+  UnsafeCallOnNullableType:
+    active: true
+  IteratorNotThrowingNoSuchElementException:
+    active: true
+
+style:
+  active: true
+  ReturnCount:
+    active: false  # Early returns are preferred for guard clauses
+  WildcardImport:
+    active: true
+    excludes: ['**/test/**', '**/androidTest/**']
+  MaxLineLength:
+    active: true
+    maxLineLength: 120
+    excludePackageStatements: true
+    excludeImportStatements: true
+  MagicNumber:
+    active: false  # Disabled — domain values like 1439 (minutes in a day) are self-documenting
+
