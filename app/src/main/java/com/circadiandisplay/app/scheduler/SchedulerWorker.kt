@@ -11,7 +11,9 @@ import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import com.circadiandisplay.app.data.repository.CurveRepository
+import com.circadiandisplay.app.data.repository.ExclusionRepository
 import com.circadiandisplay.app.data.settings.AppSettings
+import com.circadiandisplay.app.foreground.ForegroundAppProvider
 import com.circadiandisplay.core.curve.CurveEngine
 import com.circadiandisplay.core.curve.DisplayController
 import com.circadiandisplay.core.curve.DisplayState
@@ -30,6 +32,7 @@ import java.util.concurrent.TimeUnit
  * ## Edge cases handled
  *
  * - **Disabled**: Clears the display and returns success.
+ * - **Excluded app in foreground**: Clears the display and returns success.
  * - **No active profile**: Clears the display and returns success.
  * - **Empty profile**: CurveEngine returns safe default (0, 0).
  * - **WorkManager deferral**: No special handling — the next cycle will simply
@@ -43,6 +46,8 @@ class SchedulerWorker @AssistedInject constructor(
     private val appSettings: AppSettings,
     private val curveEngine: CurveEngine,
     private val displayController: DisplayController,
+    private val exclusionRepository: ExclusionRepository,
+    private val foregroundAppProvider: ForegroundAppProvider,
 ) : CoroutineWorker(appContext, workerParams) {
 
     override suspend fun doWork(): Result {
@@ -65,7 +70,18 @@ class SchedulerWorker @AssistedInject constructor(
             return
         }
 
-        // 2. Find the active profile (tracked in Room via CurveProfile.isActive)
+        // 2. If an excluded app is in the foreground, suspend adjustments.
+        //    Without Usage Access, currentForegroundPackage() returns null and
+        //    exclusions fail open (the display keeps updating as normal).
+        val foregroundPackage = foregroundAppProvider.currentForegroundPackage()
+        if (foregroundPackage != null && exclusionRepository.isExcluded(foregroundPackage)) {
+            Log.d(TAG, "Excluded app in foreground ($foregroundPackage) — clearing display")
+            displayController.clear()
+            appSettings.setLastEvaluatedAt(System.currentTimeMillis())
+            return
+        }
+
+        // 3. Find the active profile (tracked in Room via CurveProfile.isActive)
         val profile = curveRepository.getActiveProfile()
         if (profile == null) {
             Log.d(TAG, "No active profile — clearing display")
@@ -74,7 +90,7 @@ class SchedulerWorker @AssistedInject constructor(
             return
         }
 
-        // 3. Load points and evaluate
+        // 4. Load points and evaluate
         val points = curveRepository.getPointsByProfileIdOnce(profile.id)
         val now = currentTimeMinutes()
         val state = curveEngine.calculateDisplayState(profile, points, now)
@@ -85,7 +101,7 @@ class SchedulerWorker @AssistedInject constructor(
                 "warmth=${"%.2f".format(state.warmth)}, dimming=${"%.2f".format(state.dimming)}",
         )
 
-        // 4. Apply to display
+        // 5. Apply to display
         displayController.apply(state)
         appSettings.setLastEvaluatedAt(System.currentTimeMillis())
     }

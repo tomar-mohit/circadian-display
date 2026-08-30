@@ -25,6 +25,8 @@ import com.circadiandisplay.app.ui.dashboard.DashboardScreen
 import com.circadiandisplay.app.ui.dashboard.DashboardViewModel
 import com.circadiandisplay.app.ui.editor.CurveEditorScreen
 import com.circadiandisplay.app.ui.editor.CurveEditorViewModel
+import com.circadiandisplay.app.ui.exclusions.ExclusionsScreen
+import com.circadiandisplay.app.ui.exclusions.ExclusionsViewModel
 import com.circadiandisplay.app.ui.preview.PreviewScreen
 import com.circadiandisplay.app.ui.preview.PreviewViewModel
 import com.circadiandisplay.app.ui.profiles.ProfilesScreen
@@ -43,6 +45,7 @@ object AppDestinations {
     const val DASHBOARD = "dashboard"
     const val PROFILES = "profiles"
     const val SETTINGS = "settings"
+    const val EXCLUSIONS = "exclusions"
     const val CURVE_EDITOR = "curve_editor/{profileId}"
     const val PREVIEW = "preview/{profileId}"
 
@@ -131,6 +134,16 @@ fun AppNavHost() {
             composable(AppDestinations.SETTINGS) {
                 val viewModel: SettingsViewModel = hiltViewModel()
                 SettingsScreen(
+                    viewModel = viewModel,
+                    onNavigateBack = { navController.popBackStack() },
+                    onNavigateToExclusions = {
+                        navController.navigate(AppDestinations.EXCLUSIONS)
+                    },
+                )
+            }
+            composable(AppDestinations.EXCLUSIONS) {
+                val viewModel: ExclusionsViewModel = hiltViewModel()
+                ExclusionsScreen(
                     viewModel = viewModel,
                     onNavigateBack = { navController.popBackStack() },
                 )

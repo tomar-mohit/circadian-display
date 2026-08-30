@@ -19,6 +19,12 @@
     <uses-permission
         android:name="android.permission.QUERY_ALL_PACKAGES"
         tools:ignore="QueryAllPackagesPermission" />
+
+    <!-- App Exclusions — detect the current foreground app via UsageStatsManager.
+         Granted by the user in Settings → Apps → Special access → Usage access. -->
+    <uses-permission
+        android:name="android.permission.PACKAGE_USAGE_STATS"
+        tools:ignore="ProtectedPermissions" />
     <application
         android:name=".CircadianDisplayApp"
         android:allowBackup="false"
