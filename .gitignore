@@ -52,6 +52,9 @@ google-services.json
 # Internal / Meta
 docs/Internal/
 
-# Manual-Added (all photos)
+# Manual-Added
 /all-pics
 /selected-pics
+# Astro / Node
+.astro/
+node_modules/
