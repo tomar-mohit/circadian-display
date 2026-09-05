@@ -1,18 +1,78 @@
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <!-- Crescent moon representing the circadian/evening theme -->
+
+    <!-- Soft ambient glow -->
     <path
-        android:fillColor="#E8C547"
-        android:pathData="M64,36
-                          m0,-20
-                          a20,20 0 1,0 0,40
-                          a14,14 0 1,1 0,-40
-                          z" />
-    <!-- Small horizon line -->
+        android:pathData="M54,52m-30,0a30,30 0 1,0 60,0a30,30 0 1,0 -60,0">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:centerX="54"
+                android:centerY="52"
+                android:gradientRadius="30"
+                android:type="radial">
+                <item android:color="#33FDBA74" android:offset="0.0" />
+                <item android:color="#00FDBA74" android:offset="1.0" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- Main warmth orb -->
     <path
-        android:fillColor="#E8C547"
-        android:pathData="M28,78 L80,78 L80,82 L28,82 z" />
+        android:pathData="M54,50m-17,0a17,17 0 1,0 34,0a17,17 0 1,0 -34,0">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:angle="270"
+                android:startColor="#FDE68A"
+                android:centerColor="#FB923C"
+                android:endColor="#EA580C"
+                android:type="linear" />
+        </aapt:attr>
+    </path>
+
+    <!-- Circadian transition wave -->
+    <path
+        android:strokeWidth="4.6"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M22,63 C33,63 42,50 54,50 C66,50 75,63 86,63">
+        <aapt:attr name="android:strokeColor">
+            <gradient
+                android:startX="22"
+                android:startY="56"
+                android:endX="86"
+                android:endY="56"
+                android:type="linear">
+                <item android:color="#FDBA74" android:offset="0.0" />
+                <item android:color="#FDE68A" android:offset="0.55" />
+                <item android:color="#FB923C" android:offset="1.0" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- Dimming horizon -->
+    <path
+        android:strokeWidth="3"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:strokeAlpha="0.9"
+        android:pathData="M27,73 C38,73 46,67 54,67 C62,67 70,73 81,73">
+        <aapt:attr name="android:strokeColor">
+            <gradient
+                android:startX="27"
+                android:startY="70"
+                android:endX="81"
+                android:endY="70"
+                android:type="linear">
+                <item android:color="#6366F1" android:offset="0.0" />
+                <item android:color="#818CF8" android:offset="0.5" />
+                <item android:color="#4F46E5" android:offset="1.0" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+
 </vector>

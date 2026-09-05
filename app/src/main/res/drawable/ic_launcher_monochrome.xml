@@ -1,0 +1,30 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Sun orb silhouette -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M54,50m-17,0a17,17 0 1,0 34,0a17,17 0 1,0 -34,0" />
+
+    <!-- Wave curve silhouette -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="4.6"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M22,63 C33,63 42,50 54,50 C66,50 75,63 86,63" />
+
+    <!-- Dimming horizon curve silhouette -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="3"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M27,73 C38,73 46,67 54,67 C62,67 70,73 81,73" />
+
+</vector>

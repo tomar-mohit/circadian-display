@@ -1,0 +1,5 @@
+- Initial public release
+- Custom circadian warmth and dimming curves
+- Dual display engine: Overlay Mode and Native Mode (via WRITE_SECURE_SETTINGS)
+- Automatic background scheduling every 15 minutes
+- Completely offline, privacy-first, zero trackers
