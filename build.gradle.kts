@@ -1,4 +1,6 @@
-﻿plugins {
+﻿import org.gradle.api.tasks.bundling.AbstractArchiveTask
+
+plugins {
     alias(libs.plugins.android.application) apply false
     alias(libs.plugins.android.library) apply false
     alias(libs.plugins.kotlin.android) apply false
@@ -17,5 +19,11 @@ subprojects {
     configure<io.gitlab.arturbosch.detekt.extensions.DetektExtension> {
         config.setFrom(files("$rootDir/config/detekt/detekt.yml"))
         buildUponDefaultConfig = true
+    }
+
+    // Reproducible builds: deterministic JAR/AAR contents and ordering.
+    tasks.withType<AbstractArchiveTask>().configureEach {
+        isPreserveFileTimestamps = false
+        isReproducibleFileOrder = true
     }
 }

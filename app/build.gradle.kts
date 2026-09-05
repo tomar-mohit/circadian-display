@@ -64,6 +64,14 @@ ksp {
     arg("room.schemaLocation", "$projectDir/schemas")
 }
 
+// Disable baseline-profile generation: baseline.prof is non-deterministic and
+// breaks F-Droid reproducible builds (https://f-droid.org/docs/Reproducible_Builds/).
+tasks.whenTaskAdded {
+    if (name.contains("ArtProfile")) {
+        enabled = false
+    }
+}
+
 dependencies {
     implementation(project(":core:curve"))
     implementation(project(":system:overlay"))
