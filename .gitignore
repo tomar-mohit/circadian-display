@@ -58,3 +58,5 @@ docs/Internal/
 # Astro / Node
 .astro/
 node_modules/
+.continue/
+docs/private
