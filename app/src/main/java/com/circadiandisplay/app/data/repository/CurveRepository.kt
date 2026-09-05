@@ -51,6 +51,9 @@ class CurveRepository @Inject constructor(
     suspend fun getProfileCount(): Int =
         profileDao.count()
 
+    suspend fun getFirstProfile(): CurveProfile? =
+        profileDao.getFirst()?.toDomain()
+
     // ── Points ────────────────────────────────────────────────────────────
 
     fun getPointsByProfileId(profileId: Long): Flow<List<CurvePoint>> =
@@ -77,3 +80,4 @@ class CurveRepository @Inject constructor(
     suspend fun replacePoints(profileId: Long, points: List<CurvePoint>) =
         pointDao.replacePoints(profileId, points.map { it.toEntity() })
 }
+

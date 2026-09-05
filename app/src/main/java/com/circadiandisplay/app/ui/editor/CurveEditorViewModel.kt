@@ -84,26 +84,34 @@ class CurveEditorViewModel @Inject constructor(
     }
 
     fun updatePoint(id: Long, timeMinutes: Int, warmth: Float, dimming: Float) {
+        val clampedTime = timeMinutes.coerceIn(0, 1439)
+        val clampedWarmth = warmth.coerceIn(0f, 1f)
+        val clampedDimming = dimming.coerceIn(0f, 1f)
         _uiState.update { state ->
             state.copy(
                 points = state.points.map {
                     if (it.id == id) {
-                        it.copy(timeMinutes = timeMinutes, warmth = warmth, dimming = dimming)
+                        it.copy(
+                            timeMinutes = clampedTime,
+                            warmth = clampedWarmth,
+                            dimming = clampedDimming,
+                        )
                     } else {
                         it
                     }
-                },
+                }.sortedBy { it.timeMinutes },
                 hasUnsavedChanges = true,
             )
         }
     }
 
     fun movePointTime(id: Long, timeMinutes: Int) {
+        val clampedTime = timeMinutes.coerceIn(0, 1439)
         _uiState.update { state ->
             state.copy(
                 points = state.points.map {
-                    if (it.id == id) it.copy(timeMinutes = timeMinutes) else it
-                },
+                    if (it.id == id) it.copy(timeMinutes = clampedTime) else it
+                }.sortedBy { it.timeMinutes },
                 hasUnsavedChanges = true,
             )
         }
@@ -151,3 +159,4 @@ class CurveEditorViewModel @Inject constructor(
         }
     }
 }
+

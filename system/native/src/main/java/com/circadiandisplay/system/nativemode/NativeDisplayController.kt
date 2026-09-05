@@ -81,6 +81,14 @@ class NativeDisplayController @Inject constructor(
         if (!isSupported()) return
 
         val warmth = state.warmth.coerceIn(0f, 1f)
+
+        // If warmth is effectively zero, deactivate native night display
+        if (warmth <= 0.01f) {
+            Log.d(TAG, "Warmth is 0% — deactivating night display")
+            clear()
+            return
+        }
+
         val colorTemp = mapWarmthToColorTemperature(warmth)
 
         Log.d(
@@ -88,7 +96,7 @@ class NativeDisplayController @Inject constructor(
             "Applying: warmth=${"%.2f".format(warmth)} → ${colorTemp}K",
         )
 
-        // 1. Disable auto mode so manual settings persist
+        // 1. Disable auto mode so system schedule does not override our curve
         setNightDisplayAutoMode(false)
 
         // 2. Set the desired color temperature
@@ -109,58 +117,67 @@ class NativeDisplayController @Inject constructor(
     /**
      * Maps normalized warmth `[0.0 .. 1.0]` to color temperature in Kelvin.
      *
+     * Standard AOSP night display range is typically 2596K–4082K or 2000K–6500K depending
+     * on the display panel. The OS automatically clamps values within its panel bounds.
+     *
      * - 0.0 → 6500K (neutral daylight)
-     * - 1.0 → 1000K (deep amber, maximum warmth)
+     * - 1.0 → 2200K (deep amber, maximum warmth)
      */
     private fun mapWarmthToColorTemperature(warmth: Float): Int {
-        val minTemp = 1000  // Maximum warmth
+        val minTemp = 2200  // Maximum warmth (deep amber)
         val maxTemp = 6500  // Neutral (no warming)
         return (maxTemp - (maxTemp - minTemp) * warmth).toInt()
     }
 
-    // ── Night display controls (reflection → Settings.Secure fallback) ────
+    // ── Night display controls (Settings.Secure primary → reflection fallback) ────
 
     private fun setNightDisplayAutoMode(enabled: Boolean) {
-        val success = tryReflection(
-            "setNightDisplayAutoMode",
-            arrayOf(Int::class.java),
-            arrayOf(if (enabled) 1 else AUTO_MODE_DISABLED),
-        )
-        if (!success) {
+        try {
             Settings.Secure.putInt(
                 context.contentResolver,
                 KEY_NIGHT_DISPLAY_AUTO_MODE,
-                if (enabled) 1 else 0,
+                if (enabled) 1 else AUTO_MODE_DISABLED,
+            )
+        } catch (e: Exception) {
+            Log.w(TAG, "Settings.Secure write failed for auto mode: ${e.message}, trying reflection")
+            tryReflection(
+                "setNightDisplayAutoMode",
+                arrayOf(Int::class.java),
+                arrayOf(if (enabled) 1 else AUTO_MODE_DISABLED),
             )
         }
     }
 
     private fun setNightDisplayActivated(activated: Boolean) {
-        val success = tryReflection(
-            "setNightDisplayActivated",
-            arrayOf(Boolean::class.java),
-            arrayOf(activated),
-        )
-        if (!success) {
+        try {
             Settings.Secure.putInt(
                 context.contentResolver,
                 KEY_NIGHT_DISPLAY_ACTIVATED,
                 if (activated) 1 else 0,
             )
+        } catch (e: Exception) {
+            Log.w(TAG, "Settings.Secure write failed for activated: ${e.message}, trying reflection")
+            tryReflection(
+                "setNightDisplayActivated",
+                arrayOf(Boolean::class.java),
+                arrayOf(activated),
+            )
         }
     }
 
     private fun setNightDisplayColorTemperature(colorTemp: Int) {
-        val success = tryReflection(
-            "setNightDisplayColorTemperature",
-            arrayOf(Int::class.java),
-            arrayOf(colorTemp),
-        )
-        if (!success) {
+        try {
             Settings.Secure.putInt(
                 context.contentResolver,
                 KEY_NIGHT_DISPLAY_COLOR_TEMPERATURE,
                 colorTemp,
+            )
+        } catch (e: Exception) {
+            Log.w(TAG, "Settings.Secure write failed for temperature: ${e.message}, trying reflection")
+            tryReflection(
+                "setNightDisplayColorTemperature",
+                arrayOf(Int::class.java),
+                arrayOf(colorTemp),
             )
         }
     }

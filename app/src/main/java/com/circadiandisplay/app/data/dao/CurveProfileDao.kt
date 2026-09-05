@@ -37,6 +37,9 @@ interface CurveProfileDao {
     @Query("SELECT COUNT(*) FROM curve_profiles")
     suspend fun count(): Int
 
+    @Query("SELECT * FROM curve_profiles ORDER BY created_at DESC LIMIT 1")
+    suspend fun getFirst(): CurveProfileEntity?
+
     /**
      * Atomically deactivates all profiles and activates the one with [profileId].
      * Enforces the invariant that only one profile is active at a time.
@@ -53,3 +56,4 @@ interface CurveProfileDao {
     @Query("UPDATE curve_profiles SET is_active = 1 WHERE id = :id")
     suspend fun activate(id: Long)
 }
+

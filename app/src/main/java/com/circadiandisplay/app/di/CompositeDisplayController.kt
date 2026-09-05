@@ -46,15 +46,32 @@ class CompositeDisplayController @Inject constructor(
     }
 
     override fun apply(state: DisplayState) {
-        val controller = activeController()
-        Log.d(TAG, "Dispatching apply() → ${controller.javaClass.simpleName}")
-        controller.apply(state)
+        val mode = runBlocking { appSettings.getDisplayModeSnapshot() }
+        when (mode) {
+            DisplayMode.OVERLAY -> {
+                // Clear any leftover native night display so they don't combine
+                native.clear()
+                Log.d(TAG, "Dispatching apply() → OverlayDisplayController")
+                overlay.apply(state)
+            }
+            DisplayMode.NATIVE -> {
+                // Clear any lingering overlay layer
+                overlay.clear()
+                if (native.isSupported()) {
+                    Log.d(TAG, "Dispatching apply() → NativeDisplayController")
+                    native.apply(state)
+                } else {
+                    Log.w(TAG, "Native mode requested but not supported; falling back to Overlay")
+                    overlay.apply(state)
+                }
+            }
+        }
     }
 
     override fun clear() {
-        val controller = activeController()
-        Log.d(TAG, "Dispatching clear() → ${controller.javaClass.simpleName}")
-        controller.clear()
+        Log.d(TAG, "Clearing both Overlay and Native controllers")
+        overlay.clear()
+        native.clear()
     }
 
     override fun isSupported(): Boolean {

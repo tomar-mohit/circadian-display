@@ -103,23 +103,50 @@ fun SettingsScreen(
             ) {
                 Column(modifier = Modifier.padding(8.dp)) {
                     ModeOption(
-                        label = "Overlay",
-                        description = "Full-screen tint. Works everywhere, needs overlay permission.",
+                        label = "Native (Hardware)",
+                        description = if (state.nativeSupported) {
+                            "True hardware color temperature via Android Night Light. Crisp contrast, zero overlay lag."
+                        } else {
+                            "Requires WRITE_SECURE_SETTINGS permission via ADB."
+                        },
+                        selected = state.displayMode == DisplayMode.NATIVE,
+                        enabled = true,
+                        onClick = { viewModel.setDisplayMode(DisplayMode.NATIVE) },
+                    )
+                    ModeOption(
+                        label = "Overlay (Software)",
+                        description = "Full-screen tint layer. Works everywhere without ADB, supports independent dimming.",
                         selected = state.displayMode == DisplayMode.OVERLAY,
                         enabled = true,
                         onClick = { viewModel.setDisplayMode(DisplayMode.OVERLAY) },
                     )
-                    ModeOption(
-                        label = "Native",
-                        description = if (state.nativeSupported) {
-                            "Hardware color temperature (Android 10+)."
-                        } else {
-                            "Requires WRITE_SECURE_SETTINGS via ADB. Not available on this device."
-                        },
-                        selected = state.displayMode == DisplayMode.NATIVE,
-                        enabled = state.nativeSupported,
-                        onClick = { viewModel.setDisplayMode(DisplayMode.NATIVE) },
-                    )
+                }
+            }
+
+            if (!state.nativeSupported && state.displayMode == DisplayMode.NATIVE) {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = androidx.compose.material3.CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.errorContainer,
+                    ),
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(
+                            text = "Native Mode requires ADB setup",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onErrorContainer,
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "Run this command from your computer:\n" +
+                                "adb shell pm grant com.circadiandisplay.app android.permission.WRITE_SECURE_SETTINGS\n\n" +
+                                "Note: On Xiaomi/Realme/Oppo/OnePlus devices, enable 'Disable permission monitoring' or 'USB debugging (Security settings)' in Developer Options first.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onErrorContainer,
+                        )
+                    }
                 }
             }
 

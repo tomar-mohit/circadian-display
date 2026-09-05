@@ -58,7 +58,23 @@ class ProfilesViewModel @Inject constructor(
 
     fun deleteProfile(profile: CurveProfile) {
         viewModelScope.launch {
+            val wasActive = profile.isActive
             curveRepository.deleteProfile(profile)
+
+            // If the deleted profile was active, promote another profile to active
+            // so the system doesn't remain in a headless inactive state.
+            if (wasActive) {
+                val remaining = curveRepository.getProfileCount()
+                if (remaining > 0) {
+                    val firstAvailable = curveRepository.getFirstProfile()
+                    if (firstAvailable != null) {
+                        curveRepository.setActiveProfile(firstAvailable.id)
+                    }
+                }
+            }
+            // Trigger evaluation so the display reflects the change immediately
+            SchedulerWorker.triggerNow(application)
         }
     }
 }
+
