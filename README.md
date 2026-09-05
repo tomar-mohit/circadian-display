@@ -23,17 +23,10 @@ Unlike standard "night light" solutions that only offer static on/off schedules 
 
 This project is meticulously designed and planned around a modern, modular Android architecture. Below is a guide to the project's documentation:
 
-*   **[PROJECT_VISION.md](PROJECT_VISION.md):** Core mission, privacy-first philosophy, and success criteria.
-*   **[PRODUCT_REQUIREMENTS.md](PRODUCT_REQUIREMENTS.md):** MVP feature scope and explicit Non-Goals to prevent scope creep.
 *   **[ARCHITECTURE.md](ARCHITECTURE.md):** Multi-module layout, tech stack, domain models, module dependency graph, data flow diagrams, and service contracts.
-*   **[DECISIONS.md](DECISIONS.md):** Architectural Decision Records (ADRs) for every major technical choice — context, tradeoffs, and rationale.
 *   **[TESTING.md](TESTING.md):** Coverage targets, fake/mock strategy, CurveEngine edge case test matrix, Compose UI testing, device matrix, and full manual QA checklist.
-*   **[DEBUGGING.md](DEBUGGING.md):** Logging conventions, troubleshooting checklists, OEM-specific workarounds, and known issues log.
-*   **[ROADMAP.md](ROADMAP.md):** Phase-by-phase development roadmap from foundation to stable public release.
 *   **[RELEASE_PROCESS.md](RELEASE_PROCESS.md):** Branching strategy, semantic versioning guide, changelog management, release pipeline, and F-Droid / Google Play distribution requirements.
 *   **[CONTRIBUTING.md](CONTRIBUTING.md):** Development setup, code style, and pull request process.
-*   **[docs/data_model.md](docs/data_model.md):** Full Room entity definitions, DataStore keys, relationships, migration policy, and default seed data.
-*   **[docs/ui_flows.md](docs/ui_flows.md):** Screen map, navigation structure, per-screen content spec, and UiState definitions.
 
 ---
 
