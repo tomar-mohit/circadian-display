@@ -52,3 +52,6 @@ google-services.json
 # Internal / Meta
 docs/Internal/
 
+# Manual-Added (all photos)
+/all-pics
+/selected-pics

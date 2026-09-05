@@ -11,13 +11,19 @@ import com.circadiandisplay.app.scheduler.SchedulerWorker
 import com.circadiandisplay.core.curve.DisplayMode
 import com.circadiandisplay.system.nativemode.NativeDisplayController
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+
+sealed interface SettingsEvent {
+    data class ShowToast(val message: String) : SettingsEvent
+}
 
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
@@ -28,6 +34,8 @@ class SettingsViewModel @Inject constructor(
 
     private val overlayPermissionGranted = MutableStateFlow(readOverlayPermission())
     private val batteryOptimizationIgnored = MutableStateFlow(readBatteryOptimization())
+    private val _events = MutableSharedFlow<SettingsEvent>(extraBufferCapacity = 1)
+    val events = _events.asSharedFlow()
 
     val uiState: StateFlow<SettingsUiState> = combine(
         appSettings.displayMode,
@@ -52,12 +60,34 @@ class SettingsViewModel @Inject constructor(
      * so the status rows stay in sync with reality.
      */
     fun refreshPermissions() {
-        overlayPermissionGranted.value = readOverlayPermission()
-        batteryOptimizationIgnored.value = readBatteryOptimization()
+        val overlay = readOverlayPermission()
+        val battery = readBatteryOptimization()
+        overlayPermissionGranted.value = overlay
+        batteryOptimizationIgnored.value = battery
+
+        // If native mode was selected previously but permission is revoked,
+        // revert setting to OVERLAY to avoid a false state.
+        if (!nativeController.isSupported() && uiState.value.displayMode == DisplayMode.NATIVE) {
+            viewModelScope.launch {
+                appSettings.setDisplayMode(DisplayMode.OVERLAY)
+                SchedulerWorker.triggerNow(application)
+            }
+        }
     }
 
     fun setDisplayMode(mode: DisplayMode) {
         viewModelScope.launch {
+            if (mode == DisplayMode.NATIVE && !nativeController.isSupported()) {
+                _events.emit(
+                    SettingsEvent.ShowToast(
+                        "Native mode is unavailable: WRITE_SECURE_SETTINGS not granted via ADB. Falling back to Overlay.",
+                    ),
+                )
+                appSettings.setDisplayMode(DisplayMode.OVERLAY)
+                SchedulerWorker.triggerNow(application)
+                return@launch
+            }
+
             appSettings.setDisplayMode(mode)
             // Immediately re-evaluate so the display updates without waiting
             // for the next periodic WorkManager cycle.

@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.provider.Settings
+import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -32,6 +33,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -54,6 +56,16 @@ fun SettingsScreen(
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
+
+    LaunchedEffect(Unit) {
+        viewModel.events.collect { event ->
+            when (event) {
+                is SettingsEvent.ShowToast -> {
+                    Toast.makeText(context, event.message, Toast.LENGTH_LONG).show()
+                }
+            }
+        }
+    }
 
     // Re-read system permission state whenever the screen resumes, so the
     // status rows stay in sync after the user returns from system settings.
@@ -103,12 +115,8 @@ fun SettingsScreen(
             ) {
                 Column(modifier = Modifier.padding(8.dp)) {
                     ModeOption(
-                        label = "Native (Hardware)",
-                        description = if (state.nativeSupported) {
-                            "True hardware color temperature via Android Night Light. Crisp contrast, zero overlay lag."
-                        } else {
-                            "Requires WRITE_SECURE_SETTINGS permission via ADB."
-                        },
+                        label = "Native (Hardware)", 
+                        description = "True hardware color temperature via Android Night Light. Crisp contrast, zero overlay lag. (Requires WRITE_SECURE_SETTINGS permission via ADB.)",
                         selected = state.displayMode == DisplayMode.NATIVE,
                         enabled = true,
                         onClick = { viewModel.setDisplayMode(DisplayMode.NATIVE) },
