@@ -17,10 +17,16 @@
     <!-- Request exemption from battery optimization -->
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
 
-    <!-- Query installed packages for the App Exclusions list -->
-    <uses-permission
-        android:name="android.permission.QUERY_ALL_PACKAGES"
-        tools:ignore="QueryAllPackagesPermission" />
+    <!-- Query launcher apps for the App Exclusions list.
+         Android 11+ filters package visibility; declaring the exact intent we
+         query (ACTION_MAIN + CATEGORY_LAUNCHER) is the Play-compliant
+         alternative to the broad QUERY_ALL_PACKAGES permission. -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent>
+    </queries>
 
     <!-- App Exclusions — detect the current foreground app via UsageStatsManager.
          Granted by the user in Settings → Apps → Special access → Usage access. -->

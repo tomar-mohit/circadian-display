@@ -254,7 +254,16 @@ fun SettingsScreen(
                         text = "Version ${appVersionName(context)}",
                         style = MaterialTheme.typography.bodyMedium,
                     )
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(
+                        text = "Privacy Policy",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier =
+                            Modifier
+                                .clickable { openUrl(context, PRIVACY_POLICY_URL) },
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
                     Text(
                         text =
                             "Native Mode uses Android's night display system and requires " +
@@ -372,3 +381,25 @@ private fun appVersionName(context: Context): String =
     runCatching {
         context.packageManager.getPackageInfo(context.packageName, 0).versionName
     }.getOrNull() ?: "unknown"
+
+private fun openUrl(
+    context: Context,
+    url: String,
+) {
+    val intent =
+        Intent(
+            Intent.ACTION_VIEW,
+            Uri.parse(url),
+        )
+    runCatching {
+        context.startActivity(intent)
+    }
+}
+
+/**
+ * Hosted privacy-policy URL. Replace with your published URL before store
+ * submission (e.g. GitHub Pages or a project site). The policy source lives in
+ * `PRIVACY_POLICY.md` at the repository root.
+ */
+private const val PRIVACY_POLICY_URL =
+    "https://github.com/tomar-mohit/circadian-display/blob/main/PRIVACY_POLICY.md"

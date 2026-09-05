@@ -13,15 +13,15 @@ android {
     compileSdk = 35
 
     // ---------------------------------------------------------------------------
-    // versionCode defaults to 1 for local dev.
-    // CI / release pipelines override via: -PversionCode=$(git rev-list --count HEAD)
-    // versionName follows SemVer — bump manually per RELEASE_PROCESS.md.
+    // versionCode must be a plain, monotonically-increasing integer (required by
+    // both Google Play and F-Droid). Bump by 1 for every release — see
+    // RELEASE_PROCESS.md. versionName follows SemVer and is bumped manually.
     // ---------------------------------------------------------------------------
     defaultConfig {
         applicationId = "com.circadiandisplay.app"
         minSdk = 26
         targetSdk = 35
-        versionCode = (project.findProperty("versionCode") as? String)?.toInt() ?: 1
+        versionCode = 1
         versionName = "1.0.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

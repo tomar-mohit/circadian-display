@@ -1,0 +1,22 @@
+Categories:
+  - System
+License: Apache-2.0
+SourceCode: https://github.com/tomar-mohit/circadian-display
+IssueTracker: https://github.com/tomar-mohit/circadian-display/issues
+
+AutoName: Circadian Display
+
+RepoType: git
+Repo: https://github.com/tomar-mohit/circadian-display
+
+Builds:
+  - versionName: '1.0.0'
+    versionCode: 1
+    commit: v1.0.0
+    gradle:
+      - yes
+
+AutoUpdateMode: Version
+UpdateCheckMode: Tags
+CurrentVersion: '1.0.0'
+CurrentVersionCode: 1

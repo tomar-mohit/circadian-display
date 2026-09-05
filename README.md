@@ -32,21 +32,30 @@ This project is meticulously designed and planned around a modern, modular Andro
 
 ## 🗺️ Project Status
 
-We are currently in **Phase 0 (Foundation)** of our [Roadmap](ROADMAP.md). 
+Core engine, scheduler, and both display controllers are implemented end-to-end.
+The Curve Editor's graph editing and App Exclusions are still in progress.
 
-At this stage:
-- [x] Product Vision and Requirements are defined.
-- [x] Architectural Design and ADRs established (SDK target, dual mode, WorkManager, Room + DataStore, Hilt, MVVM, midnight wrap-around, native mode constraints).
-- [x] Testing strategy, debugging guide, and release process defined.
-- [x] Data model and UI flows documented.
-- [x] GitHub issue templates, PR template, and CI workflow configured.
-- [x] Apache 2.0 License added.
-- [x] Android project skeleton and dependency catalog setup.
-- [x] Core Curve Interpolation Engine implementation with 100% test coverage.
-- [ ] Room/DataStore persistence layer.
-- [ ] Scheduler (WorkManager + BOOT_COMPLETED).
-- [ ] Overlay and Native display controllers.
-- [ ] Dashboard, Curve Editor, Settings UI.
+| Phase | Status |
+|---|---|
+| Phase 0 — Foundation (Gradle, Hilt, Room, Compose scaffold) | ✅ Done |
+| Phase 1 — Core Curve Engine (`CurveEngine` + domain models) | ✅ Done |
+| Phase 2 — Scheduler (WorkManager background evaluation) | ✅ Done |
+| Phase 3 — Overlay Mode (`OverlayDisplayController`) | ✅ Done |
+| Phase 4 — Native Mode (`NativeDisplayController`) | ✅ Done |
+| Phase 5 — Curve Editor UI | 🟡 Partial |
+| Phase 6 — App Exclusions | 🟡 Partial |
+
+Shipped so far:
+- [x] Core curve interpolation engine with 100% unit-test coverage.
+- [x] Room + DataStore persistence (profiles, points, settings).
+- [x] WorkManager scheduler (~15 min) with boot re-enqueue.
+- [x] Overlay display controller (amber warmth + black dimming layers).
+- [x] Native display controller (system night light via `WRITE_SECURE_SETTINGS`).
+- [x] Dashboard and Settings screens.
+- [x] Profiles list (create, activate, delete).
+- [ ] Curve Editor graph editing (add/move points, save) and Preview.
+- [ ] App Exclusions (foreground-app detection via Usage Access).
+- [x] CI (build, unit tests, ktlint, detekt, lint).
 
 ---
 
@@ -54,7 +63,7 @@ At this stage:
 
 To set up the development environment, please see **[CONTRIBUTING.md](CONTRIBUTING.md)**. 
 
-### Quick Build & Test (Once Skeleton is Created)
+### Quick Build & Test
 
 To run the project checks and tests local command line:
 
