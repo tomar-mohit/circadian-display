@@ -24,62 +24,63 @@ import javax.inject.Singleton
  * `WRITE_SECURE_SETTINGS` permission).
  */
 @Singleton
-class CompositeDisplayController @Inject constructor(
-    private val overlay: OverlayDisplayController,
-    private val native: NativeDisplayController,
-    private val appSettings: AppSettings,
-) : DisplayController {
-
-    /**
-     * Resolve the active controller for the current call.
-     * Uses [runBlocking] to bridge the suspend [AppSettings.getDisplayModeSnapshot]
-     * into the non-suspend [DisplayController] contract.
-     *
-     * DataStore reads are in-memory after the first access, so this is fast.
-     */
-    private fun activeController(): DisplayController {
-        val mode = runBlocking { appSettings.getDisplayModeSnapshot() }
-        return when (mode) {
-            DisplayMode.OVERLAY -> overlay
-            DisplayMode.NATIVE -> native
-        }
-    }
-
-    override fun apply(state: DisplayState) {
-        val mode = runBlocking { appSettings.getDisplayModeSnapshot() }
-        when (mode) {
-            DisplayMode.OVERLAY -> {
-                // Clear any leftover native night display so they don't combine
-                native.clear()
-                Log.d(TAG, "Dispatching apply() → OverlayDisplayController")
-                overlay.apply(state)
+class CompositeDisplayController
+    @Inject
+    constructor(
+        private val overlay: OverlayDisplayController,
+        private val native: NativeDisplayController,
+        private val appSettings: AppSettings,
+    ) : DisplayController {
+        /**
+         * Resolve the active controller for the current call.
+         * Uses [runBlocking] to bridge the suspend [AppSettings.getDisplayModeSnapshot]
+         * into the non-suspend [DisplayController] contract.
+         *
+         * DataStore reads are in-memory after the first access, so this is fast.
+         */
+        private fun activeController(): DisplayController {
+            val mode = runBlocking { appSettings.getDisplayModeSnapshot() }
+            return when (mode) {
+                DisplayMode.OVERLAY -> overlay
+                DisplayMode.NATIVE -> native
             }
-            DisplayMode.NATIVE -> {
-                // Clear any lingering overlay layer
-                overlay.clear()
-                if (native.isSupported()) {
-                    Log.d(TAG, "Dispatching apply() → NativeDisplayController")
-                    native.apply(state)
-                } else {
-                    Log.w(TAG, "Native mode requested but not supported; falling back to Overlay")
+        }
+
+        override fun apply(state: DisplayState) {
+            val mode = runBlocking { appSettings.getDisplayModeSnapshot() }
+            when (mode) {
+                DisplayMode.OVERLAY -> {
+                    // Clear any leftover native night display so they don't combine
+                    native.clear()
+                    Log.d(TAG, "Dispatching apply() → OverlayDisplayController")
                     overlay.apply(state)
+                }
+                DisplayMode.NATIVE -> {
+                    // Clear any lingering overlay layer
+                    overlay.clear()
+                    if (native.isSupported()) {
+                        Log.d(TAG, "Dispatching apply() → NativeDisplayController")
+                        native.apply(state)
+                    } else {
+                        Log.w(TAG, "Native mode requested but not supported; falling back to Overlay")
+                        overlay.apply(state)
+                    }
                 }
             }
         }
-    }
 
-    override fun clear() {
-        Log.d(TAG, "Clearing both Overlay and Native controllers")
-        overlay.clear()
-        native.clear()
-    }
+        override fun clear() {
+            Log.d(TAG, "Clearing both Overlay and Native controllers")
+            overlay.clear()
+            native.clear()
+        }
 
-    override fun isSupported(): Boolean {
-        val controller = activeController()
-        return controller.isSupported()
-    }
+        override fun isSupported(): Boolean {
+            val controller = activeController()
+            return controller.isSupported()
+        }
 
-    companion object {
-        private const val TAG = "CompositeDisplayCtrl"
+        companion object {
+            private const val TAG = "CompositeDisplayCtrl"
+        }
     }
-}

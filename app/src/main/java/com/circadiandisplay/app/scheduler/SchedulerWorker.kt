@@ -39,136 +39,142 @@ import java.util.concurrent.TimeUnit
  *   evaluate against the then-current time.
  */
 @HiltWorker
-class SchedulerWorker @AssistedInject constructor(
-    @Assisted appContext: Context,
-    @Assisted workerParams: WorkerParameters,
-    private val curveRepository: CurveRepository,
-    private val appSettings: AppSettings,
-    private val curveEngine: CurveEngine,
-    private val displayController: DisplayController,
-    private val exclusionRepository: ExclusionRepository,
-    private val foregroundAppProvider: ForegroundAppProvider,
-) : CoroutineWorker(appContext, workerParams) {
-
-    override suspend fun doWork(): Result {
-        return try {
-            evaluateAndApply()
-            Result.success()
-        } catch (e: Exception) {
-            Log.e(TAG, "Scheduler evaluation failed", e)
-            Result.retry()
+// 8 injected dependencies is idiomatic for a Hilt-assisted CoroutineWorker.
+@Suppress("LongParameterList")
+class SchedulerWorker
+    @AssistedInject
+    constructor(
+        @Assisted appContext: Context,
+        @Assisted workerParams: WorkerParameters,
+        private val curveRepository: CurveRepository,
+        private val appSettings: AppSettings,
+        private val curveEngine: CurveEngine,
+        private val displayController: DisplayController,
+        private val exclusionRepository: ExclusionRepository,
+        private val foregroundAppProvider: ForegroundAppProvider,
+    ) : CoroutineWorker(appContext, workerParams) {
+        @Suppress("TooGenericExceptionCaught")
+        override suspend fun doWork(): Result {
+            return try {
+                evaluateAndApply()
+                Result.success()
+            } catch (e: Exception) {
+                // Catching broadly here is intentional: WorkManager workers must
+                // not crash; any failure should surface as a retry instead.
+                Log.e(TAG, "Scheduler evaluation failed", e)
+                Result.retry()
+            }
         }
-    }
 
-    private suspend fun evaluateAndApply() {
-        // 1. Check if the master toggle is on
-        val enabled = appSettings.isEnabledSnapshot()
-        if (!enabled) {
-            Log.d(TAG, "Disabled — clearing display")
-            displayController.clear()
+        private suspend fun evaluateAndApply() {
+            // 1. Check if the master toggle is on
+            val enabled = appSettings.isEnabledSnapshot()
+            if (!enabled) {
+                Log.d(TAG, "Disabled — clearing display")
+                displayController.clear()
+                appSettings.setLastEvaluatedAt(System.currentTimeMillis())
+                return
+            }
+
+            // 2. If an excluded app is in the foreground, suspend adjustments.
+            //    Without Usage Access, currentForegroundPackage() returns null and
+            //    exclusions fail open (the display keeps updating as normal).
+            val foregroundPackage = foregroundAppProvider.currentForegroundPackage()
+            if (foregroundPackage != null && exclusionRepository.isExcluded(foregroundPackage)) {
+                Log.d(TAG, "Excluded app in foreground ($foregroundPackage) — clearing display")
+                displayController.clear()
+                appSettings.setLastEvaluatedAt(System.currentTimeMillis())
+                return
+            }
+
+            // 3. Find the active profile (tracked in Room via CurveProfile.isActive)
+            val profile = curveRepository.getActiveProfile()
+            if (profile == null) {
+                Log.d(TAG, "No active profile — clearing display")
+                displayController.clear()
+                appSettings.setLastEvaluatedAt(System.currentTimeMillis())
+                return
+            }
+
+            // 4. Load points and evaluate
+            val points = curveRepository.getPointsByProfileIdOnce(profile.id)
+            val now = currentTimeMinutes()
+            val state = curveEngine.calculateDisplayState(profile, points, now)
+
+            Log.d(
+                TAG,
+                "Evaluated: time=$now (${"%02d:%02d".format(now / 60, now % 60)}), " +
+                    "warmth=${"%.2f".format(state.warmth)}, dimming=${"%.2f".format(state.dimming)}",
+            )
+
+            // 5. Apply to display
+            displayController.apply(state)
             appSettings.setLastEvaluatedAt(System.currentTimeMillis())
-            return
         }
 
-        // 2. If an excluded app is in the foreground, suspend adjustments.
-        //    Without Usage Access, currentForegroundPackage() returns null and
-        //    exclusions fail open (the display keeps updating as normal).
-        val foregroundPackage = foregroundAppProvider.currentForegroundPackage()
-        if (foregroundPackage != null && exclusionRepository.isExcluded(foregroundPackage)) {
-            Log.d(TAG, "Excluded app in foreground ($foregroundPackage) — clearing display")
-            displayController.clear()
-            appSettings.setLastEvaluatedAt(System.currentTimeMillis())
-            return
+        private fun currentTimeMinutes(): Int {
+            val cal = Calendar.getInstance()
+            return cal.get(Calendar.HOUR_OF_DAY) * 60 + cal.get(Calendar.MINUTE)
         }
 
-        // 3. Find the active profile (tracked in Room via CurveProfile.isActive)
-        val profile = curveRepository.getActiveProfile()
-        if (profile == null) {
-            Log.d(TAG, "No active profile — clearing display")
-            displayController.clear()
-            appSettings.setLastEvaluatedAt(System.currentTimeMillis())
-            return
-        }
+        companion object {
+            private const val TAG = "SchedulerWorker"
+            private const val WORK_NAME_PERIODIC = "circadian_scheduler_periodic"
+            private const val WORK_NAME_IMMEDIATE = "circadian_scheduler_immediate"
 
-        // 4. Load points and evaluate
-        val points = curveRepository.getPointsByProfileIdOnce(profile.id)
-        val now = currentTimeMinutes()
-        val state = curveEngine.calculateDisplayState(profile, points, now)
+            /** Minimum interval for periodic work (WorkManager constraint). */
+            private const val PERIODIC_INTERVAL_MINUTES = 15L
 
-        Log.d(
-            TAG,
-            "Evaluated: time=$now (${"%02d:%02d".format(now / 60, now % 60)}), " +
-                "warmth=${"%.2f".format(state.warmth)}, dimming=${"%.2f".format(state.dimming)}",
-        )
+            // ── WorkManager helpers ────────────────────────────────────────────
 
-        // 5. Apply to display
-        displayController.apply(state)
-        appSettings.setLastEvaluatedAt(System.currentTimeMillis())
-    }
+            /**
+             * Enqueues the repeating periodic work. Safe to call multiple times —
+             * uses [ExistingPeriodicWorkPolicy.KEEP] to avoid duplicate schedules.
+             */
+            fun enqueuePeriodic(context: Context) {
+                val request =
+                    PeriodicWorkRequestBuilder<SchedulerWorker>(
+                        PERIODIC_INTERVAL_MINUTES,
+                        TimeUnit.MINUTES,
+                    )
+                        .build()
 
-    private fun currentTimeMinutes(): Int {
-        val cal = Calendar.getInstance()
-        return cal.get(Calendar.HOUR_OF_DAY) * 60 + cal.get(Calendar.MINUTE)
-    }
+                WorkManager.getInstance(context)
+                    .enqueueUniquePeriodicWork(
+                        WORK_NAME_PERIODIC,
+                        ExistingPeriodicWorkPolicy.KEEP,
+                        request,
+                    )
 
-    companion object {
-        private const val TAG = "SchedulerWorker"
-        private const val WORK_NAME_PERIODIC = "circadian_scheduler_periodic"
-        private const val WORK_NAME_IMMEDIATE = "circadian_scheduler_immediate"
+                Log.d(TAG, "Periodic work enqueued (${PERIODIC_INTERVAL_MINUTES} min interval)")
+            }
 
-        /** Minimum interval for periodic work (WorkManager constraint). */
-        private const val PERIODIC_INTERVAL_MINUTES = 15L
+            /**
+             * Triggers an immediate one-shot evaluation.
+             * Used on app launch, profile change, mode switch, and master toggle.
+             * Uses [ExistingWorkPolicy.REPLACE] to debounce rapid successive calls.
+             */
+            fun triggerNow(context: Context) {
+                val request =
+                    OneTimeWorkRequestBuilder<SchedulerWorker>()
+                        .build()
+                WorkManager.getInstance(context)
+                    .enqueueUniqueWork(
+                        WORK_NAME_IMMEDIATE,
+                        ExistingWorkPolicy.REPLACE,
+                        request,
+                    )
 
-        // ── WorkManager helpers ────────────────────────────────────────────
-        /**
-         * Enqueues the repeating periodic work. Safe to call multiple times —
-         * uses [ExistingPeriodicWorkPolicy.KEEP] to avoid duplicate schedules.
-         */
-        fun enqueuePeriodic(context: Context) {
-            val request =
-                PeriodicWorkRequestBuilder<SchedulerWorker>(
-                    PERIODIC_INTERVAL_MINUTES,
-                    TimeUnit.MINUTES,
-                )
-                    .build()
+                Log.d(TAG, "Immediate evaluation triggered")
+            }
 
-            WorkManager.getInstance(context)
-                .enqueueUniquePeriodicWork(
-                    WORK_NAME_PERIODIC,
-                    ExistingPeriodicWorkPolicy.KEEP,
-                    request,
-                )
-
-            Log.d(TAG, "Periodic work enqueued (${PERIODIC_INTERVAL_MINUTES} min interval)")
-        }
-
-        /**
-         * Triggers an immediate one-shot evaluation.
-         * Used on app launch, profile change, mode switch, and master toggle.
-         * Uses [ExistingWorkPolicy.REPLACE] to debounce rapid successive calls.
-         */
-        fun triggerNow(context: Context) {
-            val request =
-                OneTimeWorkRequestBuilder<SchedulerWorker>()
-                    .build()
-            WorkManager.getInstance(context)
-                .enqueueUniqueWork(
-                    WORK_NAME_IMMEDIATE,
-                    ExistingWorkPolicy.REPLACE,
-                    request,
-                )
-
-            Log.d(TAG, "Immediate evaluation triggered")
-        }
-
-        /**
-         * Cancels all scheduled work (both periodic and one-shot).
-         */
-        fun cancelAll(context: Context) {
-            WorkManager.getInstance(context).cancelUniqueWork(WORK_NAME_PERIODIC)
-            WorkManager.getInstance(context).cancelUniqueWork(WORK_NAME_IMMEDIATE)
-            Log.d(TAG, "All scheduled work cancelled")
+            /**
+             * Cancels all scheduled work (both periodic and one-shot).
+             */
+            fun cancelAll(context: Context) {
+                WorkManager.getInstance(context).cancelUniqueWork(WORK_NAME_PERIODIC)
+                WorkManager.getInstance(context).cancelUniqueWork(WORK_NAME_IMMEDIATE)
+                Log.d(TAG, "All scheduled work cancelled")
+            }
         }
     }
-}
-

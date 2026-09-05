@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
@@ -49,35 +48,41 @@ fun DashboardScreen(
         topBar = {
             TopAppBar(
                 title = { Text("Circadian Display") },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                ),
+                colors =
+                    TopAppBarDefaults.topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.surface,
+                    ),
             )
         },
         modifier = modifier,
     ) { innerPadding ->
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .padding(16.dp),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             // Master toggle card
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = if (state.isEnabled)
-                        MaterialTheme.colorScheme.primaryContainer
-                    else
-                        MaterialTheme.colorScheme.surfaceVariant,
-                ),
+                colors =
+                    CardDefaults.cardColors(
+                        containerColor =
+                            if (state.isEnabled) {
+                                MaterialTheme.colorScheme.primaryContainer
+                            } else {
+                                MaterialTheme.colorScheme.surfaceVariant
+                            },
+                    ),
             ) {
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
@@ -88,10 +93,12 @@ fun DashboardScreen(
                             fontWeight = FontWeight.SemiBold,
                         )
                         Text(
-                            text = if (state.hasActiveProfile)
-                                "Profile: ${state.activeProfileName}"
-                            else
-                                "No profile selected",
+                            text =
+                                if (state.hasActiveProfile) {
+                                    "Profile: ${state.activeProfileName}"
+                                } else {
+                                    "No profile selected"
+                                },
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -154,9 +161,10 @@ fun DashboardScreen(
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                    ),
+                    colors =
+                        CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                        ),
                 ) {
                     Column(
                         modifier = Modifier.padding(24.dp),
@@ -183,9 +191,10 @@ fun DashboardScreen(
                 shape = RoundedCornerShape(12.dp),
             ) {
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
@@ -222,17 +231,19 @@ private fun ValueIndicatorCard(
             )
             Spacer(modifier = Modifier.height(8.dp))
             Box(
-                modifier = Modifier
-                    .size(56.dp)
-                    .clip(CircleShape)
-                    .background(color.copy(alpha = 0.2f)),
+                modifier =
+                    Modifier
+                        .size(56.dp)
+                        .clip(CircleShape)
+                        .background(color.copy(alpha = 0.2f)),
                 contentAlignment = Alignment.Center,
             ) {
                 Box(
-                    modifier = Modifier
-                        .size(36.dp)
-                        .clip(CircleShape)
-                        .background(color),
+                    modifier =
+                        Modifier
+                            .size(36.dp)
+                            .clip(CircleShape)
+                            .background(color),
                 )
             }
             Spacer(modifier = Modifier.height(8.dp))
@@ -247,16 +258,18 @@ private fun ValueIndicatorCard(
 
 @Composable
 private fun ModeBadge(mode: DisplayMode) {
-    val (label, containerColor) = when (mode) {
-        DisplayMode.OVERLAY -> "Overlay" to MaterialTheme.colorScheme.secondaryContainer
-        DisplayMode.NATIVE -> "Native" to MaterialTheme.colorScheme.tertiaryContainer
-    }
+    val (label, containerColor) =
+        when (mode) {
+            DisplayMode.OVERLAY -> "Overlay" to MaterialTheme.colorScheme.secondaryContainer
+            DisplayMode.NATIVE -> "Native" to MaterialTheme.colorScheme.tertiaryContainer
+        }
     Text(
         text = label,
-        modifier = Modifier
-            .clip(RoundedCornerShape(8.dp))
-            .background(containerColor)
-            .padding(horizontal = 12.dp, vertical = 4.dp),
+        modifier =
+            Modifier
+                .clip(RoundedCornerShape(8.dp))
+                .background(containerColor)
+                .padding(horizontal = 12.dp, vertical = 4.dp),
         style = MaterialTheme.typography.labelMedium,
         fontWeight = FontWeight.SemiBold,
     )
@@ -266,11 +279,15 @@ private fun ModeBadge(mode: DisplayMode) {
 private fun warmColor(warmth: Float): Color {
     // Interpolate from neutral (cool white) to warm amber
     val neutral = Color(0xFFFFF3E0) // warm white
-    val amber = Color(0xFFFF9800)   // deep amber
+    val amber = Color(0xFFFF9800) // deep amber
     return lerpColor(neutral, amber, warmth)
 }
 
-private fun lerpColor(a: Color, b: Color, t: Float): Color {
+private fun lerpColor(
+    a: Color,
+    b: Color,
+    t: Float,
+): Color {
     return Color(
         red = a.red + (b.red - a.red) * t,
         green = a.green + (b.green - a.green) * t,

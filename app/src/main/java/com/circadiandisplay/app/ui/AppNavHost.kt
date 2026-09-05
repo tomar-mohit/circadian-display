@@ -3,8 +3,8 @@ package com.circadiandisplay.app.ui
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.automirrored.filled.List
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
@@ -41,20 +41,6 @@ import com.circadiandisplay.app.ui.settings.SettingsViewModel
  * a bottom navigation bar. The Curve Editor and Preview are pushed on top of
  * those and hide the bottom bar.
  */
-object AppDestinations {
-    const val DASHBOARD = "dashboard"
-    const val PROFILES = "profiles"
-    const val SETTINGS = "settings"
-    const val EXCLUSIONS = "exclusions"
-    const val CURVE_EDITOR = "curve_editor/{profileId}"
-    const val PREVIEW = "preview/{profileId}"
-
-    fun curveEditor(profileId: Long) = "curve_editor/$profileId"
-    fun preview(profileId: Long) = "preview/$profileId"
-
-    val TOP_LEVEL = setOf(DASHBOARD, PROFILES, SETTINGS)
-}
-
 @Composable
 fun AppNavHost() {
     val navController = rememberNavController()

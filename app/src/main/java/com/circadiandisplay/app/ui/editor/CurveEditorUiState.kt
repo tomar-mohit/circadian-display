@@ -14,13 +14,14 @@ data class CurvePointDraft(
     val warmth: Float,
     val dimming: Float,
 ) {
-    fun toDomain(profileId: Long): CurvePoint = CurvePoint(
-        id = if (id > 0) id else 0,
-        profileId = profileId,
-        timeMinutes = timeMinutes,
-        warmth = warmth,
-        dimming = dimming,
-    )
+    fun toDomain(profileId: Long): CurvePoint =
+        CurvePoint(
+            id = if (id > 0) id else 0,
+            profileId = profileId,
+            timeMinutes = timeMinutes,
+            warmth = warmth,
+            dimming = dimming,
+        )
 }
 
 /**

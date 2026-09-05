@@ -29,55 +29,59 @@ private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(na
  * of sync when a profile is activated, deleted, or seeded.
  */
 @Singleton
-class AppSettings @Inject constructor(
-    @ApplicationContext private val context: Context,
-) {
-    private object Keys {
-        val MODE = stringPreferencesKey("mode")
-        val IS_ENABLED = booleanPreferencesKey("is_enabled")
-        val LAST_EVALUATED_AT = longPreferencesKey("last_evaluated_at")
+class AppSettings
+    @Inject
+    constructor(
+        @ApplicationContext private val context: Context,
+    ) {
+        private object Keys {
+            val MODE = stringPreferencesKey("mode")
+            val IS_ENABLED = booleanPreferencesKey("is_enabled")
+            val LAST_EVALUATED_AT = longPreferencesKey("last_evaluated_at")
+        }
+
+        // ── Display Mode ──────────────────────────────────────────────────────
+
+        val displayMode: Flow<DisplayMode> =
+            context.dataStore.data.map { prefs ->
+                val name = prefs[Keys.MODE] ?: DisplayMode.OVERLAY.name
+                runCatching { DisplayMode.valueOf(name) }.getOrDefault(DisplayMode.OVERLAY)
+            }
+
+        suspend fun getDisplayModeSnapshot(): DisplayMode {
+            val prefs = context.dataStore.data.first()
+            val name = prefs[Keys.MODE] ?: DisplayMode.OVERLAY.name
+            return runCatching { DisplayMode.valueOf(name) }.getOrDefault(DisplayMode.OVERLAY)
+        }
+
+        suspend fun setDisplayMode(mode: DisplayMode) {
+            context.dataStore.edit { it[Keys.MODE] = mode.name }
+        }
+
+        // ── Master Toggle ─────────────────────────────────────────────────────
+
+        val isEnabled: Flow<Boolean> =
+            context.dataStore.data.map { prefs ->
+                prefs[Keys.IS_ENABLED] ?: true
+            }
+
+        suspend fun isEnabledSnapshot(): Boolean {
+            val prefs = context.dataStore.data.first()
+            return prefs[Keys.IS_ENABLED] ?: true
+        }
+
+        suspend fun setEnabled(enabled: Boolean) {
+            context.dataStore.edit { it[Keys.IS_ENABLED] = enabled }
+        }
+
+        // ── Diagnostics ───────────────────────────────────────────────────────
+
+        val lastEvaluatedAt: Flow<Long> =
+            context.dataStore.data.map { prefs ->
+                prefs[Keys.LAST_EVALUATED_AT] ?: 0L
+            }
+
+        suspend fun setLastEvaluatedAt(timestampMs: Long) {
+            context.dataStore.edit { it[Keys.LAST_EVALUATED_AT] = timestampMs }
+        }
     }
-
-    // ── Display Mode ──────────────────────────────────────────────────────
-
-    val displayMode: Flow<DisplayMode> = context.dataStore.data.map { prefs ->
-        val name = prefs[Keys.MODE] ?: DisplayMode.OVERLAY.name
-        runCatching { DisplayMode.valueOf(name) }.getOrDefault(DisplayMode.OVERLAY)
-    }
-
-    suspend fun getDisplayModeSnapshot(): DisplayMode {
-        val prefs = context.dataStore.data.first()
-        val name = prefs[Keys.MODE] ?: DisplayMode.OVERLAY.name
-        return runCatching { DisplayMode.valueOf(name) }.getOrDefault(DisplayMode.OVERLAY)
-    }
-
-    suspend fun setDisplayMode(mode: DisplayMode) {
-        context.dataStore.edit { it[Keys.MODE] = mode.name }
-    }
-
-    // ── Master Toggle ─────────────────────────────────────────────────────
-
-    val isEnabled: Flow<Boolean> = context.dataStore.data.map { prefs ->
-        prefs[Keys.IS_ENABLED] ?: true
-    }
-
-    suspend fun isEnabledSnapshot(): Boolean {
-        val prefs = context.dataStore.data.first()
-        return prefs[Keys.IS_ENABLED] ?: true
-    }
-
-    suspend fun setEnabled(enabled: Boolean) {
-        context.dataStore.edit { it[Keys.IS_ENABLED] = enabled }
-    }
-
-    // ── Diagnostics ───────────────────────────────────────────────────────
-
-    val lastEvaluatedAt: Flow<Long> = context.dataStore.data.map { prefs ->
-        prefs[Keys.LAST_EVALUATED_AT] ?: 0L
-    }
-
-    suspend fun setLastEvaluatedAt(timestampMs: Long) {
-        context.dataStore.edit { it[Keys.LAST_EVALUATED_AT] = timestampMs }
-    }
-}
-

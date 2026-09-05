@@ -9,16 +9,21 @@ complexity:
   LongMethod:
     active: true
     threshold: 60
+    # Compose screens are declarative UI that legitimately exceed this metric.
+    excludes: ['**/ui/**']
   LongParameterList:
     active: true
     functionThreshold: 6
     constructorThreshold: 7
+    # Compose composables often carry many callbacks/modifiers.
+    excludes: ['**/ui/**']
   ComplexCondition:
     active: true
     threshold: 4
   CyclomaticComplexMethod:
     active: true
     threshold: 15
+    excludes: ['**/ui/**']
   TooManyFunctions:
     active: false  # Disabled — ViewModels and Repositories naturally accumulate functions
 
@@ -35,9 +40,10 @@ naming:
   FunctionNaming:
     active: true
     functionPattern: '([a-z][a-zA-Z0-9]*)|(`.*`)'
+    ignoreAnnotated: ['Composable']
   TopLevelPropertyNaming:
     active: true
-    constantPattern: '[A-Z][A-Za-z0-9]*'
+    constantPattern: '[A-Z][_A-Z0-9]*'
   VariableNaming:
     active: true
     variablePattern: '[a-z][A-Za-z0-9]*'
@@ -70,4 +76,3 @@ style:
     excludeImportStatements: true
   MagicNumber:
     active: false  # Disabled — domain values like 1439 (minutes in a day) are self-documenting
-

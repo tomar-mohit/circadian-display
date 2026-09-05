@@ -71,11 +71,12 @@ fun SettingsScreen(
     // status rows stay in sync after the user returns from system settings.
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
-        val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME) {
-                viewModel.refreshPermissions()
+        val observer =
+            LifecycleEventObserver { _, event ->
+                if (event == Lifecycle.Event.ON_RESUME) {
+                    viewModel.refreshPermissions()
+                }
             }
-        }
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
@@ -92,19 +93,21 @@ fun SettingsScreen(
                         )
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                ),
+                colors =
+                    TopAppBarDefaults.topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.surface,
+                    ),
             )
         },
         modifier = modifier,
     ) { innerPadding ->
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .verticalScroll(rememberScrollState())
-                .padding(16.dp),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .verticalScroll(rememberScrollState())
+                    .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             SectionHeader("Display Mode")
@@ -115,15 +118,19 @@ fun SettingsScreen(
             ) {
                 Column(modifier = Modifier.padding(8.dp)) {
                     ModeOption(
-                        label = "Native (Hardware)", 
-                        description = "True hardware color temperature via Android Night Light. Crisp contrast, zero overlay lag. (Requires WRITE_SECURE_SETTINGS permission via ADB.)",
+                        label = "Native (Hardware)",
+                        description =
+                            "True hardware color temperature via Android Night Light. " +
+                                "Crisp contrast, zero overlay lag. (Requires WRITE_SECURE_SETTINGS via ADB.)",
                         selected = state.displayMode == DisplayMode.NATIVE,
                         enabled = true,
                         onClick = { viewModel.setDisplayMode(DisplayMode.NATIVE) },
                     )
                     ModeOption(
                         label = "Overlay (Software)",
-                        description = "Full-screen tint layer. Works everywhere without ADB, supports independent dimming.",
+                        description =
+                            "Full-screen tint layer. Works everywhere without ADB, " +
+                                "supports independent dimming.",
                         selected = state.displayMode == DisplayMode.OVERLAY,
                         enabled = true,
                         onClick = { viewModel.setDisplayMode(DisplayMode.OVERLAY) },
@@ -135,9 +142,10 @@ fun SettingsScreen(
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
-                    colors = androidx.compose.material3.CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.errorContainer,
-                    ),
+                    colors =
+                        androidx.compose.material3.CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.errorContainer,
+                        ),
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text(
@@ -148,9 +156,13 @@ fun SettingsScreen(
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = "Run this command from your computer:\n" +
-                                "adb shell pm grant com.circadiandisplay.app android.permission.WRITE_SECURE_SETTINGS\n\n" +
-                                "Note: On Xiaomi/Realme/Oppo/OnePlus devices, enable 'Disable permission monitoring' or 'USB debugging (Security settings)' in Developer Options first.",
+                            text =
+                                "Run this command from your computer:\n" +
+                                    "adb shell pm grant com.circadiandisplay.app " +
+                                    "android.permission.WRITE_SECURE_SETTINGS\n\n" +
+                                    "Note: On Xiaomi/Realme/Oppo/OnePlus devices, enable " +
+                                    "'Disable permission monitoring' or 'USB debugging (Security settings)' " +
+                                    "in Developer Options first.",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onErrorContainer,
                         )
@@ -208,10 +220,11 @@ fun SettingsScreen(
                 shape = RoundedCornerShape(12.dp),
             ) {
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable(onClick = onNavigateToExclusions)
-                        .padding(16.dp),
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .clickable(onClick = onNavigateToExclusions)
+                            .padding(16.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
@@ -243,10 +256,11 @@ fun SettingsScreen(
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "Native Mode uses Android's night display system and requires " +
-                            "the WRITE_SECURE_SETTINGS permission, granted via ADB:\n" +
-                            "adb shell pm grant com.circadiandisplay.app " +
-                            "android.permission.WRITE_SECURE_SETTINGS",
+                        text =
+                            "Native Mode uses Android's night display system and requires " +
+                                "the WRITE_SECURE_SETTINGS permission, granted via ADB:\n" +
+                                "adb shell pm grant com.circadiandisplay.app " +
+                                "android.permission.WRITE_SECURE_SETTINGS",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -275,10 +289,11 @@ private fun ModeOption(
     onClick: () -> Unit,
 ) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(enabled = enabled, onClick = onClick)
-            .padding(horizontal = 8.dp, vertical = 12.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clickable(enabled = enabled, onClick = onClick)
+                .padding(horizontal = 8.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         RadioButton(
@@ -295,11 +310,12 @@ private fun ModeOption(
             Text(
                 text = description,
                 style = MaterialTheme.typography.bodySmall,
-                color = if (enabled) {
-                    MaterialTheme.colorScheme.onSurfaceVariant
-                } else {
-                    MaterialTheme.colorScheme.error
-                },
+                color =
+                    if (enabled) {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    } else {
+                        MaterialTheme.colorScheme.error
+                    },
             )
         }
     }
@@ -324,28 +340,31 @@ private fun PermissionRow(
         Text(
             text = if (granted) grantedText else deniedText,
             style = MaterialTheme.typography.bodyMedium,
-            color = if (granted) {
-                MaterialTheme.colorScheme.primary
-            } else {
-                MaterialTheme.colorScheme.error
-            },
+            color =
+                if (granted) {
+                    MaterialTheme.colorScheme.primary
+                } else {
+                    MaterialTheme.colorScheme.error
+                },
         )
     }
 }
 
 private fun openOverlayPermissionSettings(context: Context) {
-    val intent = Intent(
-        Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-        Uri.parse("package:${context.packageName}"),
-    )
+    val intent =
+        Intent(
+            Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+            Uri.parse("package:${context.packageName}"),
+        )
     context.startActivity(intent)
 }
 
 private fun requestBatteryOptimizationExemption(context: Context) {
-    val intent = Intent(
-        Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
-        Uri.parse("package:${context.packageName}"),
-    )
+    val intent =
+        Intent(
+            Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
+            Uri.parse("package:${context.packageName}"),
+        )
     context.startActivity(intent)
 }
 

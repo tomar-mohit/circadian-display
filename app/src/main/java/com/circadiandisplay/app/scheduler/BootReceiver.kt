@@ -12,8 +12,10 @@ import android.util.Log
  * permission and the `BOOT_COMPLETED` intent filter.
  */
 class BootReceiver : BroadcastReceiver() {
-
-    override fun onReceive(context: Context, intent: Intent) {
+    override fun onReceive(
+        context: Context,
+        intent: Intent,
+    ) {
         if (intent.action != Intent.ACTION_BOOT_COMPLETED) return
 
         Log.d(TAG, "Boot completed — re-enqueuing scheduler")

@@ -20,6 +20,8 @@ import com.circadiandisplay.app.data.entity.ExcludedAppEntity
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun curveProfileDao(): CurveProfileDao
+
     abstract fun curvePointDao(): CurvePointDao
+
     abstract fun excludedAppDao(): ExcludedAppDao
 }

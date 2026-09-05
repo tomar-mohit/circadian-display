@@ -12,7 +12,6 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface CurveProfileDao {
-
     @Query("SELECT * FROM curve_profiles ORDER BY created_at DESC")
     fun getAll(): Flow<List<CurveProfileEntity>>
 
@@ -56,4 +55,3 @@ interface CurveProfileDao {
     @Query("UPDATE curve_profiles SET is_active = 1 WHERE id = :id")
     suspend fun activate(id: Long)
 }
-

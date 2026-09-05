@@ -38,18 +38,20 @@ data class CurvePointEntity(
     val dimming: Float,
 )
 
-fun CurvePointEntity.toDomain(): CurvePoint = CurvePoint(
-    id = id,
-    profileId = profileId,
-    timeMinutes = timeMinutes,
-    warmth = warmth,
-    dimming = dimming,
-)
+fun CurvePointEntity.toDomain(): CurvePoint =
+    CurvePoint(
+        id = id,
+        profileId = profileId,
+        timeMinutes = timeMinutes,
+        warmth = warmth,
+        dimming = dimming,
+    )
 
-fun CurvePoint.toEntity(): CurvePointEntity = CurvePointEntity(
-    id = id,
-    profileId = profileId,
-    timeMinutes = timeMinutes,
-    warmth = warmth,
-    dimming = dimming,
-)
+fun CurvePoint.toEntity(): CurvePointEntity =
+    CurvePointEntity(
+        id = id,
+        profileId = profileId,
+        timeMinutes = timeMinutes,
+        warmth = warmth,
+        dimming = dimming,
+    )

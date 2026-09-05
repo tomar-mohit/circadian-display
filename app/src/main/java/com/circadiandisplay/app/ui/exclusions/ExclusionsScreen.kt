@@ -69,26 +69,28 @@ fun ExclusionsScreen(
 
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
-        val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME) {
-                viewModel.refreshUsageAccess()
+        val observer =
+            LifecycleEventObserver { _, event ->
+                if (event == Lifecycle.Event.ON_RESUME) {
+                    viewModel.refreshUsageAccess()
+                }
             }
-        }
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
-    val filteredApps = remember(state.installedApps, searchQuery) {
-        if (searchQuery.isBlank()) {
-            state.installedApps
-        } else {
-            val query = searchQuery.trim().lowercase()
-            state.installedApps.filter {
-                it.displayName.lowercase().contains(query) ||
-                    it.packageName.lowercase().contains(query)
+    val filteredApps =
+        remember(state.installedApps, searchQuery) {
+            if (searchQuery.isBlank()) {
+                state.installedApps
+            } else {
+                val query = searchQuery.trim().lowercase()
+                state.installedApps.filter {
+                    it.displayName.lowercase().contains(query) ||
+                        it.packageName.lowercase().contains(query)
+                }
             }
         }
-    }
 
     Scaffold(
         topBar = {
@@ -102,30 +104,34 @@ fun ExclusionsScreen(
                         )
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                ),
+                colors =
+                    TopAppBarDefaults.topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.surface,
+                    ),
             )
         },
         modifier = modifier,
     ) { innerPadding ->
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding),
         ) {
             // Header stats + search box
             Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
             ) {
                 if (!state.usageAccessGranted) {
                     UsageAccessBanner(
                         onGrantClicked = { openUsageAccessSettings(context) },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(bottom = 12.dp),
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .padding(bottom = 12.dp),
                     )
                 }
 
@@ -171,17 +177,19 @@ fun ExclusionsScreen(
 
                 filteredApps.isEmpty() -> {
                     Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(24.dp),
+                        modifier =
+                            Modifier
+                                .fillMaxSize()
+                                .padding(24.dp),
                         contentAlignment = Alignment.Center,
                     ) {
                         Text(
-                            text = if (searchQuery.isBlank()) {
-                                "No launchable apps found."
-                            } else {
-                                "No apps match \"$searchQuery\"."
-                            },
+                            text =
+                                if (searchQuery.isBlank()) {
+                                    "No launchable apps found."
+                                } else {
+                                    "No apps match \"$searchQuery\"."
+                                },
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -217,9 +225,10 @@ private fun UsageAccessBanner(
     Card(
         modifier = modifier,
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.errorContainer,
-        ),
+        colors =
+            CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.errorContainer,
+            ),
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -238,8 +247,9 @@ private fun UsageAccessBanner(
             }
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = "To pause display adjustments when excluded apps are open, " +
-                    "grant Usage Access permission.",
+                text =
+                    "To pause display adjustments when excluded apps are open, " +
+                        "grant Usage Access permission.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onErrorContainer,
             )
@@ -261,31 +271,35 @@ private fun AppExclusionRow(
     onToggle: () -> Unit,
 ) {
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onToggle),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clickable(onClick = onToggle),
         shape = RoundedCornerShape(12.dp),
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 12.dp, vertical = 8.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 12.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             if (app.icon != null) {
                 Image(
                     bitmap = app.icon,
                     contentDescription = null,
-                    modifier = Modifier
-                        .size(40.dp)
-                        .clip(RoundedCornerShape(8.dp)),
+                    modifier =
+                        Modifier
+                            .size(40.dp)
+                            .clip(RoundedCornerShape(8.dp)),
                 )
             } else {
                 Box(
-                    modifier = Modifier
-                        .size(40.dp)
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(MaterialTheme.colorScheme.surfaceVariant),
+                    modifier =
+                        Modifier
+                            .size(40.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(MaterialTheme.colorScheme.surfaceVariant),
                 )
             }
 

@@ -10,10 +10,7 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 abstract class DisplayControllerModule {
-
     @Binds
     @Singleton
-    abstract fun bindDisplayController(
-        composite: CompositeDisplayController,
-    ): DisplayController
+    abstract fun bindDisplayController(composite: CompositeDisplayController): DisplayController
 }

@@ -42,18 +42,20 @@ fun PreviewContent(
     modifier: Modifier = Modifier,
 ) {
     Column(
-        modifier = modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(16.dp),
+        modifier =
+            modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(200.dp)
-                .clip(RoundedCornerShape(16.dp))
-                .background(previewColor(displayState.warmth, displayState.dimming)),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .height(200.dp)
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(previewColor(displayState.warmth, displayState.dimming)),
             contentAlignment = Alignment.Center,
         ) {
             Text(
@@ -97,7 +99,11 @@ fun PreviewContent(
 }
 
 @Composable
-private fun PreviewValueCard(label: String, value: Float, modifier: Modifier = Modifier) {
+private fun PreviewValueCard(
+    label: String,
+    value: Float,
+    modifier: Modifier = Modifier,
+) {
     Card(
         modifier = modifier,
         shape = RoundedCornerShape(12.dp),
@@ -122,7 +128,10 @@ private fun PreviewValueCard(label: String, value: Float, modifier: Modifier = M
 }
 
 /** Approximates the on-screen result: amber warmth layered over black dimming. */
-fun previewColor(warmth: Float, dimming: Float): Color {
+fun previewColor(
+    warmth: Float,
+    dimming: Float,
+): Color {
     val neutral = Color(0xFFFFFFFF)
     val amber = Color(0xFFFFB74D)
     val warm = lerp(neutral, amber, warmth.coerceIn(0f, 1f))

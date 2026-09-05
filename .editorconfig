@@ -19,6 +19,9 @@ ktlint_standard_no-semi = enabled
 ktlint_standard_no-empty-class-body = enabled
 ktlint_standard_no-consecutive-comments = disabled
 ktlint_standard_multiline-expression = enabled
+# Compose composables are PascalCase by convention; detekt's FunctionNaming
+# (with ignoreAnnotated=['Composable']) still enforces camelCase elsewhere.
+ktlint_standard_function-naming = disabled
 
 [*.{xml,json,yml,yaml,md}]
 indent_size = 2

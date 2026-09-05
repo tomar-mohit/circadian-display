@@ -12,7 +12,6 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface CurvePointDao {
-
     @Query("SELECT * FROM curve_points WHERE profile_id = :profileId ORDER BY time_minutes ASC")
     fun getByProfileId(profileId: Long): Flow<List<CurvePointEntity>>
 
@@ -42,7 +41,10 @@ interface CurvePointDao {
      * Used by the Curve Editor to persist a full draft in one transaction.
      */
     @Transaction
-    suspend fun replacePoints(profileId: Long, points: List<CurvePointEntity>) {
+    suspend fun replacePoints(
+        profileId: Long,
+        points: List<CurvePointEntity>,
+    ) {
         deleteByProfileId(profileId)
         insertAll(points)
     }

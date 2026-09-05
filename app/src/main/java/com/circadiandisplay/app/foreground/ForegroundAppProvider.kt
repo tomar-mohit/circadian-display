@@ -10,7 +10,6 @@ package com.circadiandisplay.app.foreground
  * so the interface exists to keep the scheduler testable with fakes.
  */
 interface ForegroundAppProvider {
-
     /**
      * The package name of the current foreground app, or `null` if it cannot
      * be determined (e.g. Usage Access not granted).

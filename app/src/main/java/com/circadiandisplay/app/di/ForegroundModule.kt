@@ -11,10 +11,7 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 abstract class ForegroundModule {
-
     @Binds
     @Singleton
-    abstract fun bindForegroundAppProvider(
-        impl: UsageStatsForegroundAppProvider,
-    ): ForegroundAppProvider
+    abstract fun bindForegroundAppProvider(impl: UsageStatsForegroundAppProvider): ForegroundAppProvider
 }

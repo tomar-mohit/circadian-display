@@ -19,16 +19,16 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34])
 class ExclusionRepositoryTest {
-
     private lateinit var db: AppDatabase
     private lateinit var repository: ExclusionRepository
 
     @Before
     fun setUp() {
         val context = RuntimeEnvironment.getApplication() as Application
-        db = Room.inMemoryDatabaseBuilder(context, AppDatabase::class.java)
-            .allowMainThreadQueries()
-            .build()
+        db =
+            Room.inMemoryDatabaseBuilder(context, AppDatabase::class.java)
+                .allowMainThreadQueries()
+                .build()
         repository = ExclusionRepository(db.excludedAppDao())
     }
 
@@ -38,44 +38,49 @@ class ExclusionRepositoryTest {
     }
 
     @Test
-    fun addExclusion_thenIsExcluded_returnsTrue() = runBlocking {
-        repository.addExclusion("com.example.camera", "Camera")
+    fun addExclusion_thenIsExcluded_returnsTrue() =
+        runBlocking {
+            repository.addExclusion("com.example.camera", "Camera")
 
-        assertTrue(repository.isExcluded("com.example.camera"))
-    }
-
-    @Test
-    fun removeExclusion_thenIsExcluded_returnsFalse() = runBlocking {
-        repository.addExclusion("com.example.camera", "Camera")
-        repository.removeExclusion("com.example.camera")
-
-        assertFalse(repository.isExcluded("com.example.camera"))
-    }
+            assertTrue(repository.isExcluded("com.example.camera"))
+        }
 
     @Test
-    fun observeExcludedPackages_emitsAllAddedPackages() = runBlocking {
-        repository.addExclusion("com.example.camera", "Camera")
-        repository.addExclusion("com.example.gallery", "Gallery")
+    fun removeExclusion_thenIsExcluded_returnsFalse() =
+        runBlocking {
+            repository.addExclusion("com.example.camera", "Camera")
+            repository.removeExclusion("com.example.camera")
 
-        assertEquals(
-            setOf("com.example.camera", "com.example.gallery"),
-            repository.observeExcludedPackages().first(),
-        )
-    }
+            assertFalse(repository.isExcluded("com.example.camera"))
+        }
 
     @Test
-    fun addDuplicateExclusion_isIgnored() = runBlocking {
-        repository.addExclusion("com.example.camera", "Camera")
-        repository.addExclusion("com.example.camera", "Renamed Camera")
+    fun observeExcludedPackages_emitsAllAddedPackages() =
+        runBlocking {
+            repository.addExclusion("com.example.camera", "Camera")
+            repository.addExclusion("com.example.gallery", "Gallery")
 
-        assertEquals(
-            setOf("com.example.camera"),
-            repository.observeExcludedPackages().first(),
-        )
-    }
+            assertEquals(
+                setOf("com.example.camera", "com.example.gallery"),
+                repository.observeExcludedPackages().first(),
+            )
+        }
 
     @Test
-    fun isExcluded_unknownPackage_returnsFalse() = runBlocking {
-        assertFalse(repository.isExcluded("com.example.nonexistent"))
-    }
+    fun addDuplicateExclusion_isIgnored() =
+        runBlocking {
+            repository.addExclusion("com.example.camera", "Camera")
+            repository.addExclusion("com.example.camera", "Renamed Camera")
+
+            assertEquals(
+                setOf("com.example.camera"),
+                repository.observeExcludedPackages().first(),
+            )
+        }
+
+    @Test
+    fun isExcluded_unknownPackage_returnsFalse() =
+        runBlocking {
+            assertFalse(repository.isExcluded("com.example.nonexistent"))
+        }
 }

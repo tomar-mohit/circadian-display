@@ -18,44 +18,47 @@ import kotlinx.coroutines.flow.stateIn
 import javax.inject.Inject
 
 @HiltViewModel
-class PreviewViewModel @Inject constructor(
-    private val curveRepository: CurveRepository,
-    private val curveEngine: CurveEngine,
-    savedStateHandle: SavedStateHandle,
-) : ViewModel() {
+class PreviewViewModel
+    @Inject
+    constructor(
+        private val curveRepository: CurveRepository,
+        private val curveEngine: CurveEngine,
+        savedStateHandle: SavedStateHandle,
+    ) : ViewModel() {
+        private val profileId: Long = savedStateHandle.get<Long>("profileId") ?: -1L
 
-    private val profileId: Long = savedStateHandle.get<Long>("profileId") ?: -1L
+        private val _timeMinutes = MutableStateFlow(currentTimeMinutes())
+        private val timeMinutes: StateFlow<Int> = _timeMinutes.asStateFlow()
 
-    private val _timeMinutes = MutableStateFlow(currentTimeMinutes())
-    private val timeMinutes: StateFlow<Int> = _timeMinutes.asStateFlow()
-
-    private val profileAndPoints = flow {
-        val profile = curveRepository.getProfileById(profileId)
-        val points = curveRepository.getPointsByProfileIdOnce(profileId)
-        emit(profile to points)
-    }
-
-    val uiState: StateFlow<PreviewUiState> =
-        profileAndPoints.combine(timeMinutes) { (profile, points), time ->
-            val state = if (profile != null) {
-                curveEngine.calculateDisplayState(profile, points, time)
-            } else {
-                DisplayState(0f, 0f)
+        private val profileAndPoints =
+            flow {
+                val profile = curveRepository.getProfileById(profileId)
+                val points = curveRepository.getPointsByProfileIdOnce(profileId)
+                emit(profile to points)
             }
-            PreviewUiState(
-                isLoading = false,
-                profileName = profile?.name.orEmpty(),
-                timeMinutes = time,
-                currentTimeMinutes = currentTimeMinutes(),
-                displayState = state,
-            )
-        }.stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = PreviewUiState(),
-        )
 
-    fun setTime(minutes: Int) {
-        _timeMinutes.value = minutes.coerceIn(0, 1439)
+        val uiState: StateFlow<PreviewUiState> =
+            profileAndPoints.combine(timeMinutes) { (profile, points), time ->
+                val state =
+                    if (profile != null) {
+                        curveEngine.calculateDisplayState(profile, points, time)
+                    } else {
+                        DisplayState(0f, 0f)
+                    }
+                PreviewUiState(
+                    isLoading = false,
+                    profileName = profile?.name.orEmpty(),
+                    timeMinutes = time,
+                    currentTimeMinutes = currentTimeMinutes(),
+                    displayState = state,
+                )
+            }.stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5_000),
+                initialValue = PreviewUiState(),
+            )
+
+        fun setTime(minutes: Int) {
+            _timeMinutes.value = minutes.coerceIn(0, 1439)
+        }
     }
-}

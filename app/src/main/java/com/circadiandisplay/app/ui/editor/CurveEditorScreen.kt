@@ -125,16 +125,18 @@ fun CurveEditorScreen(
                     }
                     TextButton(
                         onClick = { viewModel.save() },
-                        enabled = state.hasUnsavedChanges &&
-                            !state.isSaving &&
-                            state.profileName.isNotBlank(),
+                        enabled =
+                            state.hasUnsavedChanges &&
+                                !state.isSaving &&
+                                state.profileName.isNotBlank(),
                     ) {
                         Text(if (state.isSaving) "Saving…" else "Save")
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                ),
+                colors =
+                    TopAppBarDefaults.topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.surface,
+                    ),
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -142,20 +144,22 @@ fun CurveEditorScreen(
     ) { innerPadding ->
         if (state.isLoading) {
             Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding),
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding),
                 contentAlignment = Alignment.Center,
             ) {
                 Text("Loading…")
             }
         } else {
             Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding)
-                    .verticalScroll(rememberScrollState())
-                    .padding(16.dp),
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding)
+                        .verticalScroll(rememberScrollState())
+                        .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
                 OutlinedTextField(
@@ -172,9 +176,10 @@ fun CurveEditorScreen(
                     onAddPoint = { viewModel.addPoint(it) },
                     onSelectPoint = { viewModel.selectPoint(it) },
                     onMovePointTime = { id, time -> viewModel.movePointTime(id, time) },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(240.dp),
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .height(240.dp),
                 )
 
                 Row(
@@ -194,43 +199,50 @@ fun CurveEditorScreen(
 
                 val selected = state.points.firstOrNull { it.id == state.selectedPointId }
                 when {
-                    selected != null -> PointEditorCard(
-                        point = selected,
-                        onUpdate = { time, warmth, dimming ->
-                            viewModel.updatePoint(selected.id, time, warmth, dimming)
-                        },
-                        onDelete = {
-                            if (state.points.size <= 1) pointToDelete = selected
-                            else viewModel.deletePoint(selected.id)
-                        },
-                    )
+                    selected != null ->
+                        PointEditorCard(
+                            point = selected,
+                            onUpdate = { time, warmth, dimming ->
+                                viewModel.updatePoint(selected.id, time, warmth, dimming)
+                            },
+                            onDelete = {
+                                if (state.points.size <= 1) {
+                                    pointToDelete = selected
+                                } else {
+                                    viewModel.deletePoint(selected.id)
+                                }
+                            },
+                        )
 
-                    state.points.isEmpty() -> Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = androidx.compose.material3.CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                        ),
-                    ) {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(24.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally,
+                    state.points.isEmpty() ->
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(12.dp),
+                            colors =
+                                androidx.compose.material3.CardDefaults.cardColors(
+                                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                ),
                         ) {
-                            Text(
-                                text = "No points yet",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.SemiBold,
-                            )
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                text = "Tap the graph above to add your first point.",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
+                            Column(
+                                modifier =
+                                    Modifier
+                                        .fillMaxWidth()
+                                        .padding(24.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                            ) {
+                                Text(
+                                    text = "No points yet",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.SemiBold,
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = "Tap the graph above to add your first point.",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
                         }
-                    }
                 }
             }
         }
@@ -302,33 +314,36 @@ private fun CurveGraph(
     val touchPx = with(density) { 22.dp.toPx() }
 
     Canvas(
-        modifier = modifier.pointerInput(points) {
-            val w = size.width.toFloat()
-            val h = size.height.toFloat()
-            awaitEachGesture {
-                val down = awaitFirstDown(requireUnconsumed = false)
-                val sorted = points.sortedBy { it.timeMinutes }
-                val hit = sorted.firstOrNull { p ->
-                    val c = Offset(
-                        timeToX(p.timeMinutes, w, insetPx),
-                        valueToY(p.warmth, h, insetPx),
-                    )
-                    (down.position - c).getDistance() <= touchPx
-                }
-                if (hit != null) {
-                    onSelectPoint(hit.id)
-                    drag(down.id) { change ->
-                        change.consume()
-                        onMovePointTime(hit.id, xToTime(change.position.x, w, insetPx))
+        modifier =
+            modifier.pointerInput(points) {
+                val w = size.width.toFloat()
+                val h = size.height.toFloat()
+                awaitEachGesture {
+                    val down = awaitFirstDown(requireUnconsumed = false)
+                    val sorted = points.sortedBy { it.timeMinutes }
+                    val hit =
+                        sorted.firstOrNull { p ->
+                            val c =
+                                Offset(
+                                    timeToX(p.timeMinutes, w, insetPx),
+                                    valueToY(p.warmth, h, insetPx),
+                                )
+                            (down.position - c).getDistance() <= touchPx
+                        }
+                    if (hit != null) {
+                        onSelectPoint(hit.id)
+                        drag(down.id) { change ->
+                            change.consume()
+                            onMovePointTime(hit.id, xToTime(change.position.x, w, insetPx))
+                        }
+                    } else {
+                        val dragged = drag(down.id) { change -> change.consume() }
+                        if (!dragged) {
+                            onAddPoint(xToTime(down.position.x, w, insetPx))
+                        }
                     }
-                } else {
-                    val dragged = drag(down.id) { change -> change.consume() }
-                    if (!dragged) {
-                        onAddPoint(xToTime(down.position.x, w, insetPx))
-                    }
                 }
-            }
-        },
+            },
     ) {
         val w = size.width
         val h = size.height
@@ -364,10 +379,11 @@ private fun CurveGraph(
         }
 
         sorted.forEach { p ->
-            val center = Offset(
-                timeToX(p.timeMinutes, w, insetPx),
-                valueToY(p.warmth, h, insetPx),
-            )
+            val center =
+                Offset(
+                    timeToX(p.timeMinutes, w, insetPx),
+                    valueToY(p.warmth, h, insetPx),
+                )
             val radius = if (p.id == selectedId) 10.dp.toPx() else 7.dp.toPx()
             drawCircle(color = WarmLineColor, radius = radius, center = center)
             drawCircle(color = Color.White, radius = radius * 0.5f, center = center)
@@ -433,9 +449,10 @@ private fun PointEditorCard(
             OutlinedButton(
                 onClick = onDelete,
                 modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.outlinedButtonColors(
-                    contentColor = MaterialTheme.colorScheme.error,
-                ),
+                colors =
+                    ButtonDefaults.outlinedButtonColors(
+                        contentColor = MaterialTheme.colorScheme.error,
+                    ),
             ) {
                 Text("Delete point")
             }
@@ -468,13 +485,17 @@ private fun LabeledSlider(
 }
 
 @Composable
-private fun LegendItem(label: String, color: Color) {
+private fun LegendItem(
+    label: String,
+    color: Color,
+) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         Box(
-            modifier = Modifier
-                .size(10.dp)
-                .clip(CircleShape)
-                .background(color),
+            modifier =
+                Modifier
+                    .size(10.dp)
+                    .clip(CircleShape)
+                    .background(color),
         )
         Spacer(modifier = Modifier.width(4.dp))
         Text(label, style = MaterialTheme.typography.labelSmall)
@@ -490,9 +511,10 @@ private fun EditorPreviewDialog(
 ) {
     val engine = remember { CurveEngine() }
     val domainPoints = remember(points) { points.map { it.toDomain(profileId) } }
-    val profile = remember(profileId, profileName) {
-        CurveProfile(id = profileId, name = profileName.ifBlank { "Preview" })
-    }
+    val profile =
+        remember(profileId, profileName) {
+            CurveProfile(id = profileId, name = profileName.ifBlank { "Preview" })
+        }
     var time by remember { mutableIntStateOf(currentTimeMinutes()) }
     val displayState = engine.calculateDisplayState(profile, domainPoints, time)
 
@@ -503,9 +525,10 @@ private fun EditorPreviewDialog(
         Surface(modifier = Modifier.fillMaxSize()) {
             Column {
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 8.dp, bottom = 8.dp),
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(top = 8.dp, bottom = 8.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
@@ -530,11 +553,20 @@ private fun EditorPreviewDialog(
     }
 }
 
-private fun timeToX(timeMinutes: Int, width: Float, inset: Float): Float =
-    inset + (width - 2 * inset) * (timeMinutes / 1439f)
+private fun timeToX(
+    timeMinutes: Int,
+    width: Float,
+    inset: Float,
+): Float = inset + (width - 2 * inset) * (timeMinutes / 1439f)
 
-private fun valueToY(value: Float, height: Float, inset: Float): Float =
-    inset + (height - 2 * inset) * (1f - value)
+private fun valueToY(
+    value: Float,
+    height: Float,
+    inset: Float,
+): Float = inset + (height - 2 * inset) * (1f - value)
 
-private fun xToTime(x: Float, width: Float, inset: Float): Int =
-    ((x - inset) / (width - 2 * inset) * 1439f).roundToInt().coerceIn(0, 1439)
+private fun xToTime(
+    x: Float,
+    width: Float,
+    inset: Float,
+): Int = ((x - inset) / (width - 2 * inset) * 1439f).roundToInt().coerceIn(0, 1439)

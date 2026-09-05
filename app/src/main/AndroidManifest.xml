@@ -7,7 +7,9 @@
 
     <!-- Native Mode — required for ColorDisplayManager / Settings.Secure access.
          Must be granted via ADB: adb shell pm grant com.circadiandisplay.app android.permission.WRITE_SECURE_SETTINGS -->
-    <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS" />
+    <uses-permission
+        android:name="android.permission.WRITE_SECURE_SETTINGS"
+        tools:ignore="ProtectedPermissions" />
 
     <!-- Restart scheduler after device reboot -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />

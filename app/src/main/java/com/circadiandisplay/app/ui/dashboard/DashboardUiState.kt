@@ -19,4 +19,3 @@ data class DashboardUiState(
     val lastEvaluatedAt: Long = 0L,
     val currentTimeMinutes: Int = 0,
 )
-

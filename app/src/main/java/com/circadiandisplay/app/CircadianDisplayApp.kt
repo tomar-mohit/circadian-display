@@ -27,7 +27,6 @@ import javax.inject.Inject
  */
 @HiltAndroidApp
 class CircadianDisplayApp : Application(), Configuration.Provider {
-
     @Inject
     lateinit var seedData: SeedData
 
@@ -35,9 +34,10 @@ class CircadianDisplayApp : Application(), Configuration.Provider {
     lateinit var workerFactory: HiltWorkerFactory
 
     override val workManagerConfiguration: Configuration
-        get() = Configuration.Builder()
-            .setWorkerFactory(workerFactory)
-            .build()
+        get() =
+            Configuration.Builder()
+                .setWorkerFactory(workerFactory)
+                .build()
 
     override fun onCreate() {
         super.onCreate()
@@ -54,4 +54,3 @@ class CircadianDisplayApp : Application(), Configuration.Provider {
         SchedulerWorker.triggerNow(this)
     }
 }
-

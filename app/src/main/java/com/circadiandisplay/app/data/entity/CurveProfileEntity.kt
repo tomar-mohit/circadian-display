@@ -23,16 +23,18 @@ data class CurveProfileEntity(
     val createdAt: Long = System.currentTimeMillis(),
 )
 
-fun CurveProfileEntity.toDomain(): CurveProfile = CurveProfile(
-    id = id,
-    name = name,
-    isActive = isActive,
-    createdAt = createdAt,
-)
+fun CurveProfileEntity.toDomain(): CurveProfile =
+    CurveProfile(
+        id = id,
+        name = name,
+        isActive = isActive,
+        createdAt = createdAt,
+    )
 
-fun CurveProfile.toEntity(): CurveProfileEntity = CurveProfileEntity(
-    id = id,
-    name = name,
-    isActive = isActive,
-    createdAt = createdAt,
-)
+fun CurveProfile.toEntity(): CurveProfileEntity =
+    CurveProfileEntity(
+        id = id,
+        name = name,
+        isActive = isActive,
+        createdAt = createdAt,
+    )

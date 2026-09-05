@@ -11,22 +11,22 @@ import androidx.sqlite.db.SupportSQLiteDatabase
  * Destructive migration is never acceptable (see docs/data_model.md).
  */
 object AppDatabaseMigrations {
-
     /**
      * v1 → v2: add the `excluded_apps` table for the App Exclusions feature.
      */
-    val MIGRATION_1_2 = object : Migration(1, 2) {
-        override fun migrate(db: SupportSQLiteDatabase) {
-            db.execSQL(
-                """
-                CREATE TABLE IF NOT EXISTS `excluded_apps` (
-                    `package_name` TEXT NOT NULL,
-                    `display_name` TEXT NOT NULL,
-                    `added_at` INTEGER NOT NULL,
-                    PRIMARY KEY(`package_name`)
+    val MIGRATION_1_2 =
+        object : Migration(1, 2) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `excluded_apps` (
+                        `package_name` TEXT NOT NULL,
+                        `display_name` TEXT NOT NULL,
+                        `added_at` INTEGER NOT NULL,
+                        PRIMARY KEY(`package_name`)
+                    )
+                    """.trimIndent(),
                 )
-                """.trimIndent()
-            )
+            }
         }
-    }
 }

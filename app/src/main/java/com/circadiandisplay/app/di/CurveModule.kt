@@ -10,7 +10,6 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object CurveModule {
-
     @Provides
     @Singleton
     fun provideCurveEngine(): CurveEngine = CurveEngine()

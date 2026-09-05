@@ -21,65 +21,65 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class DashboardViewModel @Inject constructor(
-    private val application: Application,
-    private val curveRepository: CurveRepository,
-    private val appSettings: AppSettings,
-    private val curveEngine: CurveEngine,
-    private val displayController: DisplayController,
-) : ViewModel() {
-
-    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
-    val uiState: StateFlow<DashboardUiState> =
-        combine(
-            appSettings.isEnabled,
-            appSettings.displayMode,
-            curveRepository.observeActiveProfile(),
-        ) { isEnabled, displayMode, profile ->
-            Triple(isEnabled, displayMode, profile)
-        }.flatMapLatest { (isEnabled, displayMode, profile) ->
-        if (profile != null) {
-                curveRepository.getPointsByProfileId(profile.id).map { points ->
-                    val now = currentTimeMinutes()
-                    val displayState = curveEngine.calculateDisplayState(profile, points, now)
-                    DashboardUiState(
-                        isEnabled = isEnabled,
-                        activeProfileName = profile.name,
-                        activeProfileId = profile.id,
-                        hasActiveProfile = true,
-                        currentWarmth = displayState.warmth,
-                        currentDimming = displayState.dimming,
-                        activeMode = displayMode,
-                        nativeSupported = displayController.isSupported(),
-                        currentTimeMinutes = now,
+class DashboardViewModel
+    @Inject
+    constructor(
+        private val application: Application,
+        private val curveRepository: CurveRepository,
+        private val appSettings: AppSettings,
+        private val curveEngine: CurveEngine,
+        private val displayController: DisplayController,
+    ) : ViewModel() {
+        @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+        val uiState: StateFlow<DashboardUiState> =
+            combine(
+                appSettings.isEnabled,
+                appSettings.displayMode,
+                curveRepository.observeActiveProfile(),
+            ) { isEnabled, displayMode, profile ->
+                Triple(isEnabled, displayMode, profile)
+            }.flatMapLatest { (isEnabled, displayMode, profile) ->
+                if (profile != null) {
+                    curveRepository.getPointsByProfileId(profile.id).map { points ->
+                        val now = currentTimeMinutes()
+                        val displayState = curveEngine.calculateDisplayState(profile, points, now)
+                        DashboardUiState(
+                            isEnabled = isEnabled,
+                            activeProfileName = profile.name,
+                            activeProfileId = profile.id,
+                            hasActiveProfile = true,
+                            currentWarmth = displayState.warmth,
+                            currentDimming = displayState.dimming,
+                            activeMode = displayMode,
+                            nativeSupported = displayController.isSupported(),
+                            currentTimeMinutes = now,
+                        )
+                    }
+                } else {
+                    flowOf(
+                        DashboardUiState(
+                            isEnabled = isEnabled,
+                            activeProfileName = null,
+                            hasActiveProfile = false,
+                            activeMode = displayMode,
+                            nativeSupported = displayController.isSupported(),
+                            currentTimeMinutes = currentTimeMinutes(),
+                        ),
                     )
                 }
-        } else {
-                flowOf(
-                    DashboardUiState(
-                        isEnabled = isEnabled,
-                        activeProfileName = null,
-                        hasActiveProfile = false,
-                        activeMode = displayMode,
-                        nativeSupported = displayController.isSupported(),
-                        currentTimeMinutes = currentTimeMinutes(),
-                    )
-                )
-            }
-        }.stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = DashboardUiState(),
-        )
+            }.stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5_000),
+                initialValue = DashboardUiState(),
+            )
 
-    fun toggleEnabled() {
-        viewModelScope.launch {
-            val newState = !uiState.value.isEnabled
-            appSettings.setEnabled(newState)
-            // Immediately re-evaluate so the display updates without waiting
-            // for the next periodic WorkManager cycle
-            SchedulerWorker.triggerNow(application)
+        fun toggleEnabled() {
+            viewModelScope.launch {
+                val newState = !uiState.value.isEnabled
+                appSettings.setEnabled(newState)
+                // Immediately re-evaluate so the display updates without waiting
+                // for the next periodic WorkManager cycle
+                SchedulerWorker.triggerNow(application)
+            }
         }
     }
-}
-

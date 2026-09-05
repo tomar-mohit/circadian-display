@@ -9,7 +9,6 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface ExcludedAppDao {
-
     @Query("SELECT * FROM excluded_apps ORDER BY added_at DESC")
     fun getAll(): Flow<List<ExcludedAppEntity>>
 

@@ -24,8 +24,9 @@ data class ExcludedAppEntity(
     val addedAt: Long = System.currentTimeMillis(),
 )
 
-fun ExcludedAppEntity.toDomain(): ExcludedApp = ExcludedApp(
-    packageName = packageName,
-    displayName = displayName,
-    addedAt = addedAt,
-)
+fun ExcludedAppEntity.toDomain(): ExcludedApp =
+    ExcludedApp(
+        packageName = packageName,
+        displayName = displayName,
+        addedAt = addedAt,
+    )

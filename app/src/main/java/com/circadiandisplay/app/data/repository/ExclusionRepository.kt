@@ -15,29 +15,31 @@ import javax.inject.Singleton
  * adjustments) and the Exclusions screen (to render and mutate the list).
  */
 @Singleton
-class ExclusionRepository @Inject constructor(
-    private val dao: ExcludedAppDao,
-) {
-    fun observeAll(): Flow<List<ExcludedApp>> =
-        dao.getAll().map { entities -> entities.map { it.toDomain() } }
+class ExclusionRepository
+    @Inject
+    constructor(
+        private val dao: ExcludedAppDao,
+    ) {
+        fun observeAll(): Flow<List<ExcludedApp>> = dao.getAll().map { entities -> entities.map { it.toDomain() } }
 
-    /** Reactive set of excluded package names for the scheduler/UI. */
-    fun observeExcludedPackages(): Flow<Set<String>> =
-        dao.getExcludedPackages().map { it.toSet() }
+        /** Reactive set of excluded package names for the scheduler/UI. */
+        fun observeExcludedPackages(): Flow<Set<String>> = dao.getExcludedPackages().map { it.toSet() }
 
-    suspend fun isExcluded(packageName: String): Boolean =
-        dao.isExcluded(packageName)
+        suspend fun isExcluded(packageName: String): Boolean = dao.isExcluded(packageName)
 
-    suspend fun addExclusion(packageName: String, displayName: String) {
-        dao.insert(
-            ExcludedAppEntity(
-                packageName = packageName,
-                displayName = displayName,
+        suspend fun addExclusion(
+            packageName: String,
+            displayName: String,
+        ) {
+            dao.insert(
+                ExcludedAppEntity(
+                    packageName = packageName,
+                    displayName = displayName,
+                ),
             )
-        )
-    }
+        }
 
-    suspend fun removeExclusion(packageName: String) {
-        dao.deleteByPackage(packageName)
+        suspend fun removeExclusion(packageName: String) {
+            dao.deleteByPackage(packageName)
+        }
     }
-}
