@@ -1,9 +1,4 @@
-﻿**Creating modified .gitignore**
-
-I want to output a complete modified .gitignore file in plain text, including the suggested additions the user mentioned. I need to remember not to include any code fences and to stick to just the file contents. It's also important to preserve any existing comments in the original file. I'll make sure to merge everything correctly, with the new additions inserted appropriately into the right spots. Let's get this right!**Creating modified .gitignore**
-
-I want to output a complete modified .gitignore file in plain text, including the suggested additions the user mentioned. I need to remember not to include any code fences and to stick to just the file contents. It's also important to preserve any existing comments in the original file. I'll make sure to merge everything correctly, with the new additions inserted appropriately into the right spots. Let's get this right!# Gradle
-.gradle/
+﻿.gradle/
 build/
 !gradle/wrapper/gradle-wrapper.jar
 !gradle/wrapper/gradle-wrapper.properties
@@ -59,8 +54,10 @@ docs/Internal/
 .astro/
 node_modules/
 .continue/
-docs/private
+docs/private/
 AGENTS.md
 PRODUCT_REQUIREMENTS.md
 PROJECT_VISION.md
 ROADMAP.md
+DECISIONS.md
+DEBUGGING.md
