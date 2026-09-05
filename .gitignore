@@ -60,3 +60,7 @@ docs/Internal/
 node_modules/
 .continue/
 docs/private
+AGENTS.md
+PRODUCT_REQUIREMENTS.md
+PROJECT_VISION.md
+ROADMAP.md
