@@ -10,7 +10,7 @@ Unlike standard "night light" solutions that only offer static on/off schedules 
 
 - **Dynamic Comfort Curves:** Plot your custom evening transition with precise warmth and dimming levels over time.
 - **Dual-Engine Modes:**
-  - **Native Mode:** Leverages system-level display adjustment APIs where supported for premium hardware-level shifting.
+  - **Native Mode:** Leverages system-level display adjustment APIs (Android 10+; `WRITE_SECURE_SETTINGS` via ADB) where supported for premium hardware-level shifting.
   - **Overlay Mode:** Highly customizable, high-compatibility software overlay filtering warmth and brightness.
 - **Background Scheduler:** Lightweight, efficient execution that automatically adjusts the display state in the background.
 - **App Exclusions:** Define lists of applications (e.g., cameras, photo editors, games) where screen tinting and dimming should temporarily deactivate.
@@ -32,8 +32,10 @@ This project is meticulously designed and planned around a modern, modular Andro
 
 ## 🗺️ Project Status
 
-Core engine, scheduler, and both display controllers are implemented end-to-end.
-The Curve Editor's graph editing and App Exclusions are still in progress.
+Core engine, scheduler, both display controllers, and all UI screens are
+implemented end-to-end. The app is listed on F-Droid (merge request
+[#47994](https://gitlab.com/fdroid/fdroiddata/-/merge_requests/47994) merged;
+awaiting the next build-server cycle).
 
 | Phase | Status |
 |---|---|
@@ -42,19 +44,20 @@ The Curve Editor's graph editing and App Exclusions are still in progress.
 | Phase 2 — Scheduler (WorkManager background evaluation) | ✅ Done |
 | Phase 3 — Overlay Mode (`OverlayDisplayController`) | ✅ Done |
 | Phase 4 — Native Mode (`NativeDisplayController`) | ✅ Done |
-| Phase 5 — Curve Editor UI | 🟡 Partial |
-| Phase 6 — App Exclusions | 🟡 Partial |
+| Phase 5 — Curve Editor UI | ✅ Done |
+| Phase 6 — App Exclusions | ✅ Done |
 
 Shipped so far:
 - [x] Core curve interpolation engine with 100% unit-test coverage.
-- [x] Room + DataStore persistence (profiles, points, settings).
+- [x] Room + DataStore persistence (profiles, points, settings, exclusions).
 - [x] WorkManager scheduler (~15 min) with boot re-enqueue.
 - [x] Overlay display controller (amber warmth + black dimming layers).
 - [x] Native display controller (system night light via `WRITE_SECURE_SETTINGS`).
 - [x] Dashboard and Settings screens.
-- [x] Profiles list (create, activate, delete).
-- [ ] Curve Editor graph editing (add/move points, save) and Preview.
-- [ ] App Exclusions (foreground-app detection via Usage Access).
+- [x] Profiles list (create, rename, activate, delete).
+- [x] Curve Editor graph editing (tap to add, drag to move, per-point sliders).
+- [x] Preview (simulate any time of day against a curve).
+- [x] App Exclusions (foreground-app detection via Usage Access).
 - [x] CI (build, unit tests, ktlint, detekt, lint).
 
 ---

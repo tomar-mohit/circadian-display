@@ -2,6 +2,14 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <!-- WorkManager pulls in ACCESS_NETWORK_STATE by default to support
+         network-constrained background jobs. Circadian Display is 100% offline
+         and only uses time-based scheduling, so this permission is unused.
+         Strip it from the merged manifest. -->
+    <uses-permission
+        android:name="android.permission.ACCESS_NETWORK_STATE"
+        tools:node="remove" />
+
     <!-- Overlay Mode — required for drawing over other apps -->
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
 

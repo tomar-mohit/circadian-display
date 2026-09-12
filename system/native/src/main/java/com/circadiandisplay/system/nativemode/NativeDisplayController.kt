@@ -68,14 +68,31 @@ class NativeDisplayController
 
         // ── DisplayController contract ────────────────────────────────────────
 
+        /**
+         * Whether the device runs Android 10+ (API 29+), the minimum version
+         * required for the native night display system.
+         *
+         * Exposed separately from [isSupported] so callers can distinguish
+         * "this device is too old" from "permission not granted".
+         */
+        fun isApiSupported(): Boolean = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q
+
+        /**
+         * Whether [PERMISSION_WRITE_SECURE_SETTINGS] has been granted via ADB.
+         *
+         * Exposed separately from [isSupported] for the same reason as
+         * [isApiSupported].
+         */
+        fun isWriteSecureSettingsGranted(): Boolean =
+            context.checkSelfPermission(PERMISSION_WRITE_SECURE_SETTINGS) ==
+                PackageManager.PERMISSION_GRANTED
+
         override fun isSupported(): Boolean {
-            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+            if (!isApiSupported()) {
                 Log.d(TAG, "Not supported: API ${Build.VERSION.SDK_INT} < 29")
                 return false
             }
-            val granted =
-                context.checkSelfPermission(PERMISSION_WRITE_SECURE_SETTINGS) ==
-                    PackageManager.PERMISSION_GRANTED
+            val granted = isWriteSecureSettingsGranted()
             if (!granted) {
                 Log.d(TAG, "Not supported: WRITE_SECURE_SETTINGS not granted")
             }

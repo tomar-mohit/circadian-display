@@ -40,9 +40,10 @@ Requested so the background scheduler runs reliably. No data is involved.
 
 ### `WRITE_SECURE_SETTINGS` (Native Mode, optional)
 
-An optional, power-user feature granted manually via ADB. When granted, the app
-writes to Android's night-light settings to shift color temperature at the
-hardware level. This is a device setting only — no personal data.
+An optional, power-user feature granted manually via ADB. It requires Android 10+
+(API 29+). When granted, the app writes to Android's night-light settings to
+shift color temperature at the hardware level. This is a device setting only —
+no personal data.
 
 ## Data stored on your device
 

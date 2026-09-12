@@ -119,6 +119,17 @@ This project uses [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) forma
 
 F-Droid builds the app from source. It does not accept pre-built APKs.
 
+The F-Droid build recipe lives in the [F-Droid data repository](https://gitlab.com/fdroid/fdroiddata)
+(`metadata/com.circadiandisplay.app.yml`). The app's initial listing was merged via
+[MR #47994](https://gitlab.com/fdroid/fdroiddata/-/merge_requests/47994).
+
+**A copy of the build recipe** is mirrored in this repo at `fdroid/com.circadiandisplay.app.yml`.
+When bumping versions, update the YAML in both repos and open a new MR against
+`fdroid/fdroiddata`.
+
+> Machine-specific clone paths for this repo and the F-Droid metadata fork are
+> kept in `docs/private/` (git-ignored), not in this shared document.
+
 Required setup in the repository:
 
 ```
@@ -136,8 +147,6 @@ fastlane/
           featureGraphic.png
           phoneScreenshots/     (at least 2 screenshots)
 ```
-
-The F-Droid build recipe will be maintained in the [F-Droid data repository](https://gitlab.com/fdroid/fdroiddata). It must specify the exact Gradle build command and the signing-free build variant.
 
 ---
 

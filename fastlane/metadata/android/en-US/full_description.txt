@@ -2,7 +2,7 @@ Circadian Display continuously adjusts your screen's warmth and brightness throu
 
 Features:
 - Dynamic comfort curves with precise warmth and dimming levels over time
-- Dual-engine modes: Native (system-level) and Overlay (software-based, works on all devices)
+- Dual-engine modes: Native (system-level, Android 10+ with ADB setup) and Overlay (software-based, works on all devices)
 - Background scheduler for automatic, hands-free operation
 - Privacy-first: completely offline, tracker-free, no data collection
 - Open source (Apache 2.0)

@@ -1,0 +1,3 @@
+- Clarified that Native (Hardware) mode requires Android 10+ (API 29+)
+- Split native-mode error messages so API-level and ADB-permission issues are reported separately
+- Removed the unused ACCESS_NETWORK_STATE permission pulled in by WorkManager

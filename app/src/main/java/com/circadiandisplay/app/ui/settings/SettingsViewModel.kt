@@ -47,6 +47,8 @@ class SettingsViewModel
                 SettingsUiState(
                     displayMode = mode,
                     nativeSupported = nativeController.isSupported(),
+                    nativeApiSupported = nativeController.isApiSupported(),
+                    nativePermissionGranted = nativeController.isWriteSecureSettingsGranted(),
                     overlayPermissionGranted = overlay,
                     batteryOptimizationIgnored = battery,
                 )
@@ -80,12 +82,15 @@ class SettingsViewModel
         fun setDisplayMode(mode: DisplayMode) {
             viewModelScope.launch {
                 if (mode == DisplayMode.NATIVE && !nativeController.isSupported()) {
-                    _events.emit(
-                        SettingsEvent.ShowToast(
+                    val message =
+                        if (!nativeController.isApiSupported()) {
+                            "Native mode requires Android 10+ (API 29+). " +
+                                "Your device is not supported - falling back to Overlay."
+                        } else {
                             "Native mode is unavailable: WRITE_SECURE_SETTINGS not granted via ADB. " +
-                                "Falling back to Overlay.",
-                        ),
-                    )
+                                "Falling back to Overlay."
+                        }
+                    _events.emit(SettingsEvent.ShowToast(message))
                     appSettings.setDisplayMode(DisplayMode.OVERLAY)
                     SchedulerWorker.triggerNow(application)
                     return@launch

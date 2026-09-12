@@ -121,7 +121,8 @@ fun SettingsScreen(
                         label = "Native (Hardware)",
                         description =
                             "True hardware color temperature via Android Night Light. " +
-                                "Crisp contrast, zero overlay lag. (Requires WRITE_SECURE_SETTINGS via ADB.)",
+                                "Crisp contrast, zero overlay lag. (Android 10+; requires " +
+                                "WRITE_SECURE_SETTINGS via ADB.)",
                         selected = state.displayMode == DisplayMode.NATIVE,
                         enabled = true,
                         onClick = { viewModel.setDisplayMode(DisplayMode.NATIVE) },
@@ -148,24 +149,45 @@ fun SettingsScreen(
                         ),
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
-                        Text(
-                            text = "Native Mode requires ADB setup",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onErrorContainer,
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text =
-                                "Run this command from your computer:\n" +
-                                    "adb shell pm grant com.circadiandisplay.app " +
-                                    "android.permission.WRITE_SECURE_SETTINGS\n\n" +
-                                    "Note: On Xiaomi/Realme/Oppo/OnePlus devices, enable " +
-                                    "'Disable permission monitoring' or 'USB debugging (Security settings)' " +
-                                    "in Developer Options first.",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onErrorContainer,
-                        )
+                        if (!state.nativeApiSupported) {
+                            Text(
+                                text = "Native Mode requires Android 10+",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onErrorContainer,
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text =
+                                    "Native (Hardware) mode uses Android's Night Light color " +
+                                        "system, which is only available on Android 10 (API 29) " +
+                                        "and newer. Your device runs an older version of Android, " +
+                                        "so please use Overlay (Software) mode instead.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onErrorContainer,
+                            )
+                        } else {
+                            Text(
+                                text = "Native Mode requires ADB setup",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onErrorContainer,
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text =
+                                    "Native Mode requires Android 10+ (API 29+) and the " +
+                                        "WRITE_SECURE_SETTINGS permission. Run this command " +
+                                        "from your computer:\n" +
+                                        "adb shell pm grant com.circadiandisplay.app " +
+                                        "android.permission.WRITE_SECURE_SETTINGS\n\n" +
+                                        "Note: On Xiaomi/Realme/Oppo/OnePlus devices, enable " +
+                                        "'Disable permission monitoring' or 'USB debugging (Security settings)' " +
+                                        "in Developer Options first.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onErrorContainer,
+                            )
+                        }
                     }
                 }
             }
@@ -266,8 +288,9 @@ fun SettingsScreen(
                     Spacer(modifier = Modifier.height(12.dp))
                     Text(
                         text =
-                            "Native Mode uses Android's night display system and requires " +
-                                "the WRITE_SECURE_SETTINGS permission, granted via ADB:\n" +
+                            "Native Mode uses Android's night display system (Android 10+ / " +
+                                "API 29) and requires the WRITE_SECURE_SETTINGS permission, " +
+                                "granted via ADB:\n" +
                                 "adb shell pm grant com.circadiandisplay.app " +
                                 "android.permission.WRITE_SECURE_SETTINGS",
                         style = MaterialTheme.typography.bodySmall,
