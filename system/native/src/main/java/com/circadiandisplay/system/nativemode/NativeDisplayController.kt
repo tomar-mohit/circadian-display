@@ -5,6 +5,7 @@ package com.circadiandisplay.system.nativemode
 
 import android.content.Context
 import android.content.pm.PackageManager
+import android.content.res.Resources
 import android.os.Build
 import android.provider.Settings
 import android.util.Log
@@ -13,6 +14,7 @@ import com.circadiandisplay.core.curve.DisplayState
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.math.roundToInt
 
 /**
  * Applies warmth via Android's native night display (color temperature) system.
@@ -31,8 +33,17 @@ import javax.inject.Singleton
  *
  * ## Color temperature mapping
  *
- * Warmth 0.0 → 6500K (neutral daylight — no visible warming).
- * Warmth 1.0 → 1000K (deep amber — maximum warming).
+ * Warmth is mapped onto the device's supported night-display range, resolved at
+ * runtime from the framework (`config_nightDisplayColorTemperatureMin/Max`,
+ * typically 2596K–4082K):
+ *
+ * - Warmth 0.0 → device maximum (neutral — no visible warming).
+ * - Warmth 1.0 → device minimum (deep amber — maximum warming).
+ *
+ * The temperature is always clamped to that range. Writing an out-of-range
+ * value directly to [Settings.Secure] bypasses the system's own validation and
+ * produces a broken color matrix (a fully black screen on some devices, e.g.
+ * Samsung One UI).
  *
  * ## Limitations
  *
@@ -65,6 +76,12 @@ class NativeDisplayController
                 null
             }
         }
+
+        /**
+         * The device's supported night-display color temperature range in
+         * Kelvin, resolved once from the framework config resources.
+         */
+        private val colorTemperatureRange: IntRange by lazy { resolveColorTemperatureRange() }
 
         // ── DisplayController contract ────────────────────────────────────────
 
@@ -137,19 +154,56 @@ class NativeDisplayController
         // ── Color temperature mapping ─────────────────────────────────────────
 
         /**
-         * Maps normalized warmth `[0.0 .. 1.0]` to color temperature in Kelvin.
+         * Maps normalized warmth `[0.0 .. 1.0]` to a color temperature in Kelvin,
+         * clamped to the device's supported night-display range.
          *
-         * Standard AOSP night display range is typically 2596K–4082K or 2000K–6500K depending
-         * on the display panel. The OS automatically clamps values within its panel bounds.
-         *
-         * - 0.0 → 6500K (neutral daylight)
-         * - 1.0 → 2200K (deep amber, maximum warmth)
+         * - 0.0 → device maximum temperature (neutral — no warming)
+         * - 1.0 → device minimum temperature (deep amber — maximum warmth)
          */
         private fun mapWarmthToColorTemperature(warmth: Float): Int {
-            val minTemp = 2200 // Maximum warmth (deep amber)
-            val maxTemp = 6500 // Neutral (no warming)
-            return (maxTemp - (maxTemp - minTemp) * warmth).toInt()
+            val minTemp = colorTemperatureRange.first
+            val maxTemp = colorTemperatureRange.last
+            return (maxTemp - (maxTemp - minTemp) * warmth)
+                .roundToInt()
+                .coerceIn(minTemp, maxTemp)
         }
+
+        /**
+         * Resolves the night-display color temperature bounds from the framework
+         * config resources, falling back to AOSP defaults when unavailable.
+         */
+        private fun resolveColorTemperatureRange(): IntRange {
+            val res = context.resources
+            val min =
+                readFrameworkColorTemperature(
+                    res,
+                    FRAMEWORK_MIN_TEMP_RES,
+                    DEFAULT_MIN_COLOR_TEMPERATURE,
+                )
+            val max =
+                readFrameworkColorTemperature(
+                    res,
+                    FRAMEWORK_MAX_TEMP_RES,
+                    DEFAULT_MAX_COLOR_TEMPERATURE,
+                )
+            return if (min in 1 until max) {
+                min..max
+            } else {
+                DEFAULT_MIN_COLOR_TEMPERATURE..DEFAULT_MAX_COLOR_TEMPERATURE
+            }
+        }
+
+        private fun readFrameworkColorTemperature(
+            res: Resources,
+            name: String,
+            fallback: Int,
+        ): Int =
+            try {
+                val id = res.getIdentifier(name, "integer", "android")
+                if (id != 0) res.getInteger(id) else fallback
+            } catch (e: Exception) {
+                fallback
+            }
 
         // ── Night display controls (Settings.Secure primary → reflection fallback) ────
 
@@ -241,5 +295,13 @@ class NativeDisplayController
 
             /** Value that disables auto mode (0 = disabled, 1 = enabled). */
             private const val AUTO_MODE_DISABLED = 0
+
+            /** Framework config resource names for the night-display temperature bounds. */
+            private const val FRAMEWORK_MIN_TEMP_RES = "config_nightDisplayColorTemperatureMin"
+            private const val FRAMEWORK_MAX_TEMP_RES = "config_nightDisplayColorTemperatureMax"
+
+            /** AOSP default night-display range, in Kelvin. */
+            private const val DEFAULT_MIN_COLOR_TEMPERATURE = 2596
+            private const val DEFAULT_MAX_COLOR_TEMPERATURE = 4082
         }
     }
