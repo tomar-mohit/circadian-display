@@ -80,8 +80,9 @@ class OverlayDisplayController
          */
         private val windowAlpha: Float =
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                val max = context.getSystemService(InputManager::class.java)
-                    ?.maximumObscuringOpacityForTouch
+                val max =
+                    context.getSystemService(InputManager::class.java)
+                        ?.maximumObscuringOpacityForTouch
                 max?.coerceIn(0f, 1f) ?: DEFAULT_MAX_OBSCURING_OPACITY
             } else {
                 1f
@@ -131,8 +132,7 @@ class OverlayDisplayController
 
         // ── Internals ─────────────────────────────────────────────────────────
 
-        private fun getOrCreateOverlayView(): OverlayView =
-            overlayView ?: createOverlayView().also { overlayView = it }
+        private fun getOrCreateOverlayView(): OverlayView = overlayView ?: createOverlayView().also { overlayView = it }
 
         private fun createOverlayView(): OverlayView {
             val view = OverlayView(context)

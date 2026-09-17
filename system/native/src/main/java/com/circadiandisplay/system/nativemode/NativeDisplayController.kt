@@ -174,16 +174,18 @@ class NativeDisplayController
          */
         private fun resolveColorTemperatureRange(): IntRange {
             val res = context.resources
-            val min = readFrameworkColorTemperature(
-                res,
-                FRAMEWORK_MIN_TEMP_RES,
-                DEFAULT_MIN_COLOR_TEMPERATURE,
-            )
-            val max = readFrameworkColorTemperature(
-                res,
-                FRAMEWORK_MAX_TEMP_RES,
-                DEFAULT_MAX_COLOR_TEMPERATURE,
-            )
+            val min =
+                readFrameworkColorTemperature(
+                    res,
+                    FRAMEWORK_MIN_TEMP_RES,
+                    DEFAULT_MIN_COLOR_TEMPERATURE,
+                )
+            val max =
+                readFrameworkColorTemperature(
+                    res,
+                    FRAMEWORK_MAX_TEMP_RES,
+                    DEFAULT_MAX_COLOR_TEMPERATURE,
+                )
             return if (min in 1 until max) {
                 min..max
             } else {
@@ -191,7 +193,11 @@ class NativeDisplayController
             }
         }
 
-        private fun readFrameworkColorTemperature(res: Resources, name: String, fallback: Int): Int =
+        private fun readFrameworkColorTemperature(
+            res: Resources,
+            name: String,
+            fallback: Int,
+        ): Int =
             try {
                 val id = res.getIdentifier(name, "integer", "android")
                 if (id != 0) res.getInteger(id) else fallback
