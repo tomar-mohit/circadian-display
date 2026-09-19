@@ -1,6 +1,8 @@
 Categories:
   - System
 License: Apache-2.0
+AuthorName: Mohit Tomar
+AuthorWebSite: https://github.com/tomar-mohit
 SourceCode: https://github.com/tomar-mohit/circadian-display
 IssueTracker: https://github.com/tomar-mohit/circadian-display/issues
 
@@ -19,12 +21,19 @@ Builds:
 
   - versionName: 1.0.1
     versionCode: 2
-    commit: v1.0.1
+    commit: a0ba841ca41807062094032b7d10efe9c3600326
+    subdir: app
+    gradle:
+      - yes
+
+  - versionName: 1.0.2
+    versionCode: 3
+    commit: 8899bd384c70f572c4f8cddbb15316900b3b6bae
     subdir: app
     gradle:
       - yes
 
 AutoUpdateMode: Version
 UpdateCheckMode: Tags
-CurrentVersion: 1.0.1
-CurrentVersionCode: 2
+CurrentVersion: 1.0.2
+CurrentVersionCode: 3
