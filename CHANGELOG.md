@@ -9,6 +9,15 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+## [1.0.2] - 2026-09-19
+
+### Fixed
+- Overlay Mode: the warmth/dimming layer no longer blocks touch input on Android 12+ (it is now drawn as a single, non-touchable window).
+- Native Mode: colour temperature is clamped to the device's supported range, fixing a black screen on some devices.
+- Build: `core:curve` now emits Java 17 bytecode so it can be consumed by the Android modules and built with a JDK 17 toolchain.
+
+## [1.0.1] - 2026-09-12
+
 ### Fixed
 - Clarified Native Mode's Android 10+ (API 29+) requirement in the Settings screen and split native-mode error messaging so API-level and ADB-permission issues are reported separately.
 - Removed the unused `ACCESS_NETWORK_STATE` permission pulled in by WorkManager.

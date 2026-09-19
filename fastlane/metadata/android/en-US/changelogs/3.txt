@@ -1,0 +1,2 @@
+- Overlay Mode: the warmth/dimming layer no longer blocks touches on Android 12+
+- Native Mode: colour temperature now clamps to your device's supported range, fixing a black screen on some devices
