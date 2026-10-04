@@ -5,6 +5,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.awaitTouchSlopOrCancellation
 import androidx.compose.foundation.gestures.drag
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -49,6 +50,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -313,14 +315,21 @@ private fun CurveGraph(
     val insetPx = with(density) { 16.dp.toPx() }
     val touchPx = with(density) { 22.dp.toPx() }
 
+    // Keyed on Unit so an in-progress drag is not cancelled when the points list changes.
+    // The latest values are read through rememberUpdatedState instead.
+    val currentPoints by rememberUpdatedState(points)
+    val currentOnAddPoint by rememberUpdatedState(onAddPoint)
+    val currentOnSelectPoint by rememberUpdatedState(onSelectPoint)
+    val currentOnMovePointTime by rememberUpdatedState(onMovePointTime)
+
     Canvas(
         modifier =
-            modifier.pointerInput(points) {
+            modifier.pointerInput(Unit) {
                 val w = size.width.toFloat()
                 val h = size.height.toFloat()
                 awaitEachGesture {
                     val down = awaitFirstDown(requireUnconsumed = false)
-                    val sorted = points.sortedBy { it.timeMinutes }
+                    val sorted = currentPoints.sortedBy { it.timeMinutes }
                     val hit =
                         sorted.firstOrNull { p ->
                             val c =
@@ -331,15 +340,37 @@ private fun CurveGraph(
                             (down.position - c).getDistance() <= touchPx
                         }
                     if (hit != null) {
-                        onSelectPoint(hit.id)
-                        drag(down.id) { change ->
-                            change.consume()
-                            onMovePointTime(hit.id, xToTime(change.position.x, w, insetPx))
+                        currentOnSelectPoint(hit.id)
+                        // Only move the point once the gesture passes touch slop so a simple
+                        // tap selects it without nudging it.
+                        val slopChange =
+                            awaitTouchSlopOrCancellation(down.id) { change, _ ->
+                                change.consume()
+                            }
+                        if (slopChange != null) {
+                            currentOnMovePointTime(
+                                hit.id,
+                                xToTime(slopChange.position.x, w, insetPx),
+                            )
+                            drag(slopChange.id) { change ->
+                                change.consume()
+                                currentOnMovePointTime(
+                                    hit.id,
+                                    xToTime(change.position.x, w, insetPx),
+                                )
+                            }
                         }
                     } else {
-                        val dragged = drag(down.id) { change -> change.consume() }
-                        if (!dragged) {
-                            onAddPoint(xToTime(down.position.x, w, insetPx))
+                        // Empty space: a gesture that stays within touch slop is a tap, which adds
+                        // a point at the touched time. Once touch slop is crossed it is treated as
+                        // a drag and ignored. (drag()'s return value cannot be used for this: it is
+                        // true for any gesture that ends in a normal finger-up, including a tap.)
+                        val slopChange =
+                            awaitTouchSlopOrCancellation(down.id) { change, _ ->
+                                change.consume()
+                            }
+                        if (slopChange == null) {
+                            currentOnAddPoint(xToTime(down.position.x, w, insetPx))
                         }
                     }
                 }
