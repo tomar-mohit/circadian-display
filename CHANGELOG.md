@@ -9,6 +9,16 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+### Fixed
+- Status bar clock and icons are now legible on devices using the system dark mode. The window chrome previously followed the system's night mode while the in-app UI stayed light, which drew light status-bar glyphs on the app's near-white background (measured contrast ~1.03:1, against a 3:1 accessibility floor for UI components).
+- Removed the brief dark flash when launching the app on a device using the system dark mode: the window background now matches the app's light UI.
+
+## [1.0.3] - 2026-10-04
+
+### Fixed
+- Curve Editor: tapping an empty area of the graph now adds a point. Previously the tap could be treated as the start of a drag and ignored.
+- Curve Editor: dragging a point is no longer interrupted when the curve is redrawn mid-gesture.
+
 ## [1.0.2] - 2026-09-19
 
 ### Fixed

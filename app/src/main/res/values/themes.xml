@@ -1,5 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.CircadianDisplay" parent="Theme.Material3.DayNight.NoActionBar" />
+    <!--
+      The Compose UI is pinned to the light colour scheme (see DECISIONS.md #009), so the window
+      frame drawn before the first Compose frame must be light as well. With a DayNight parent, a
+      device in dark mode shows a dark splash/window background that snaps to a light app.
+      Revert to Theme.Material3.DayNight.NoActionBar when the in-app theme override lands
+      (DECISIONS.md #010).
+    -->
+    <style name="Theme.CircadianDisplay" parent="Theme.Material3.Light.NoActionBar" />
 </resources>
 

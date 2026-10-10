@@ -131,7 +131,15 @@ Use `ComposeTestRule` for all UI tests. Do not test layout pixel positions — t
 
 ### Screenshot Testing
 
-Not required for MVP. Flagged for Phase 5 (User Experience) once UI is stable. Consider Paparazzi or Roborazzi when introduced.
+Deferred to 2.0.0, together with the in-app theme work (DECISIONS.md #010).
+
+This is no longer optional polish. The status bar defect recorded in DECISIONS.md #009 (white glyphs on
+a `#FFFBFE` surface, ~1.03:1 contrast) was present in every release from 1.0.0 and was invisible to
+the entire unit test suite by construction. The theme work adds the same class of risk to the curve
+editor's grid lines and legend, which are currently hardcoded to a light background.
+
+Render each screen in both colour schemes and assert on pixels. Consider Paparazzi or Roborazzi when
+introduced.
 
 ---
 
@@ -196,6 +204,18 @@ Run before every beta or stable release. Record the Android version and device m
 | Scrub timeline to a time between two points | Warmth and dimming values interpolate correctly |
 | Scrub timeline to a time after the last point | Display preview shows last point's values |
 | Close preview | Live screen is unchanged |
+
+### System Bars
+
+Scheme-dependent contrast defects are invisible to unit tests and easy to miss by eye. Verify these
+by screenshot when the graphic is ambiguous (see Screenshot Testing below).
+
+| Step | Expected Result |
+|---|---|
+| With the system in dark mode, open the app | Status bar clock, battery and Wi-Fi glyphs are dark and legible against the app's light surfaces (≥ 4.5:1 contrast, not white-on-white) |
+| With the system in light mode, open the app | Identical appearance to the dark-mode case — the app's own UI is light-only until the theme setting lands in 2.0.0 (DECISIONS.md #010) |
+| Launch the app with the system in dark mode | No dark window or splash frame before the light UI appears |
+| With gesture navigation, inspect the navigation bar area | The gesture handle is visible against the light content (API 27+; API 26 falls back to a dark bar by platform limitation) |
 
 ### Edge Cases
 

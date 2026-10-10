@@ -8,7 +8,7 @@ Semantic Versioning: `MAJOR.MINOR.PATCH`
 
 | Segment | When to increment |
 |---|---|
-| `MAJOR` | Breaking change to user data (e.g., Room migration that is not backward-compatible, complete UX overhaul). For a consumer app, reserve for complete redesigns or data format breaks. |
+| `MAJOR` | Breaking change to user data (e.g., a Room migration that is not backward-compatible), or a presentation overhaul the user is meant to notice (e.g., a new theme system, a brand palette, a navigation restructure). |
 | `MINOR` | New user-facing feature added in a backward-compatible way (e.g., new preset system, new curve export feature). |
 | `PATCH` | Bug fix, crash fix, performance improvement, or copy change. No new features. |
 
@@ -22,6 +22,9 @@ Examples:
 1.1.0 (versionCode 3)  — Presets feature added
 2.0.0 (versionCode 4)  — Full UI redesign
 ```
+
+A presentation overhaul counts as MAJOR even when the stored data format is unchanged: 2.0.0 introduces
+in-app theming and a brand palette without touching Room or DataStore (see DECISIONS.md #010).
 
 ---
 

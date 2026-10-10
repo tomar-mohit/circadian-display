@@ -55,9 +55,12 @@ docs/Internal/
 node_modules/
 .continue/
 docs/private/
+
+# Internal-only context docs. Tracked files must not link to these — readers of the published
+# repository cannot open them. DECISIONS.md is deliberately absent from this list: the ADRs are
+# public documentation and are linked from ARCHITECTURE.md and CONTRIBUTING.md.
 AGENTS.md
 PRODUCT_REQUIREMENTS.md
 PROJECT_VISION.md
 ROADMAP.md
-DECISIONS.md
 DEBUGGING.md

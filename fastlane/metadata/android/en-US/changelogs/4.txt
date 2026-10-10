@@ -1,0 +1,2 @@
+- Curve Editor: tapping an empty part of the graph now adds a point
+- Curve Editor: dragging a point is no longer interrupted when the curve is redrawn mid-gesture

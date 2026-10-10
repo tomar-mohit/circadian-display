@@ -1,0 +1,3 @@
+- Status bar clock, battery and Wi-Fi icons are no longer invisible on devices using the system dark mode
+- Removed the dark flash when the app opens on devices using the system dark mode
+- The navigation bar now matches the app's background instead of drawing a dark strip across the bottom
