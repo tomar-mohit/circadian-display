@@ -484,7 +484,7 @@ Date:
 2026-10-07
 
 Status:
-Proposed
+Accepted (implemented in 2.0.0, versionCode 6)
 
 Context:
 
@@ -567,3 +567,35 @@ removes the defect that users are actually feeling today.
 
 This is versioned 2.0.0 rather than 1.1.0 because `RELEASE_PROCESS.md` counts a presentation overhaul
 as a major change, even though no stored data format changes.
+
+Outcome (2.0.0, 2026-10-18):
+
+Implemented as designed. What shipped:
+
+* `ThemeMode` (SYSTEM / LIGHT / DARK) in `data/settings`, stored under `theme_mode` and resolving to
+  SYSTEM when the key is absent, so no DataStore migration was needed.
+* `ui/theme/Color.kt` and `ui/theme/Theme.kt`. Light stays on the Material baseline; dark is a warm
+  carbon/amber scheme (`primary` #FFB96E, `surface` #1A1613, `background` #130F0D).
+* `MainActivity` resolves the mode, drives `enableEdgeToEdge()` from the resolved value, and
+  re-applies the bars when it changes. `themes.xml` is back on `Theme.Material3.DayNight.NoActionBar`.
+* Settings gained an Appearance section that reuses the existing radio-row pattern (`ModeOption`).
+* The curve graph's grid, dimming line, and point handles are scheme-aware. The preview panel and the
+  dashboard swatches stay hardcoded on purpose and now carry comments saying so.
+
+All five traps were handled; none of them materialised as a defect. Verified by screenshot on a
+Realme RMX3853 (API 36, 3-button navigation), covering all four system/app combinations:
+
+| system | app | surface | status-bar glyphs | contrast |
+| --- | --- | --- | --- | --- |
+| dark | Light | #FFFBFE | #191919 | 17.2:1 |
+| dark | Dark (SYSTEM) | #1A1613 | #D1D0D0 | 11.8:1 |
+| light | Dark | #1A1613 | #D1D0D0 | 11.8:1 |
+| light | Light (SYSTEM) | #FFFBFE | #191919 | 17.2:1 |
+
+In-app text measured 14.1:1 on `background`, 7.5:1 on cards, 5.4:1 for `onSurfaceVariant` labels, and
+the curve's dimming line 8.6:1 against the canvas. Switching the setting re-themes live, and SYSTEM
+follows a device-level switch without a restart.
+
+Note on trap 2: the graph colours are resolved through `currentSchemeIsDark()`, which reads the
+*scheme* rather than the system setting. That keeps the editor correct when the theme overrides the
+system, and it is the reason the check belongs in composition rather than in a file-level constant.

@@ -44,6 +44,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.circadiandisplay.app.data.settings.ThemeMode
 import com.circadiandisplay.core.curve.DisplayMode
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -121,8 +122,9 @@ fun SettingsScreen(
                         label = "Native (Hardware)",
                         description =
                             "True hardware color temperature via Android Night Light. " +
-                                "Crisp contrast, zero overlay lag. (Android 10+; requires " +
-                                "WRITE_SECURE_SETTINGS via ADB.)",
+                                "Crisp contrast, zero overlay lag. Dimming is not applied in " +
+                                "Native Mode. (Android 10+; requires WRITE_SECURE_SETTINGS " +
+                                "via ADB.)",
                         selected = state.displayMode == DisplayMode.NATIVE,
                         enabled = true,
                         onClick = { viewModel.setDisplayMode(DisplayMode.NATIVE) },
@@ -189,6 +191,37 @@ fun SettingsScreen(
                             )
                         }
                     }
+                }
+            }
+
+            SectionHeader("Appearance")
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+            ) {
+                Column(modifier = Modifier.padding(8.dp)) {
+                    ModeOption(
+                        label = "System default",
+                        description = "Match your device's dark mode setting",
+                        selected = state.themeMode == ThemeMode.SYSTEM,
+                        enabled = true,
+                        onClick = { viewModel.setThemeMode(ThemeMode.SYSTEM) },
+                    )
+                    ModeOption(
+                        label = "Light",
+                        description = "Always light, whatever the device is set to",
+                        selected = state.themeMode == ThemeMode.LIGHT,
+                        enabled = true,
+                        onClick = { viewModel.setThemeMode(ThemeMode.LIGHT) },
+                    )
+                    ModeOption(
+                        label = "Dark",
+                        description = "Always dark, whatever the device is set to",
+                        selected = state.themeMode == ThemeMode.DARK,
+                        enabled = true,
+                        onClick = { viewModel.setThemeMode(ThemeMode.DARK) },
+                    )
                 }
             }
 
@@ -289,8 +322,9 @@ fun SettingsScreen(
                     Text(
                         text =
                             "Native Mode uses Android's night display system (Android 10+ / " +
-                                "API 29) and requires the WRITE_SECURE_SETTINGS permission, " +
-                                "granted via ADB:\n" +
+                                "API 29), which only adjusts color temperature — dimming is " +
+                                "not applied in Native Mode. It requires the " +
+                                "WRITE_SECURE_SETTINGS permission, granted via ADB:\n" +
                                 "adb shell pm grant com.circadiandisplay.app " +
                                 "android.permission.WRITE_SECURE_SETTINGS",
                         style = MaterialTheme.typography.bodySmall,

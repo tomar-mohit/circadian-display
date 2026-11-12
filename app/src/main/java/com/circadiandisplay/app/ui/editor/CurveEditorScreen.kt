@@ -67,15 +67,46 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.circadiandisplay.app.ui.preview.PreviewContent
+import com.circadiandisplay.app.ui.theme.Amber
+import com.circadiandisplay.app.ui.theme.DimLineDark
+import com.circadiandisplay.app.ui.theme.DimLineLight
+import com.circadiandisplay.app.ui.theme.GridDark
+import com.circadiandisplay.app.ui.theme.GridLight
+import com.circadiandisplay.app.ui.theme.currentSchemeIsDark
 import com.circadiandisplay.app.util.currentTimeMinutes
 import com.circadiandisplay.app.util.minutesToTimeString
 import com.circadiandisplay.core.curve.CurveEngine
 import com.circadiandisplay.core.curve.CurveProfile
 import kotlin.math.roundToInt
 
-private val WarmLineColor = Color(0xFFFF9800)
-private val DimLineColor = Color(0xFF757575)
-private val GridColor = Color(0x22000000)
+/**
+ * Colours for the curve graph, resolved from the active scheme.
+ *
+ * These used to be file-level constants. A `Color.White` point centre and a 13 %-black grid are
+ * invisible or wrong on the dark scheme, so they are computed in composition instead
+ * (DECISIONS.md #010, trap 2). Everything that draws the graph - including its legend - takes them
+ * from here so the two can never disagree.
+ */
+private data class CurveGraphColors(
+    val warmth: Color,
+    val dimming: Color,
+    val grid: Color,
+    val pointCentre: Color,
+)
+
+@Composable
+private fun curveGraphColors(): CurveGraphColors {
+    val dark = currentSchemeIsDark()
+    val scheme = MaterialTheme.colorScheme
+    return CurveGraphColors(
+        warmth = Amber,
+        dimming = if (dark) DimLineDark else DimLineLight,
+        grid = if (dark) GridDark else GridLight,
+        // The canvas draws straight onto the Scaffold's container, not onto a card, so the hole in
+        // each point handle has to match `background` rather than `surface`.
+        pointCentre = scheme.background,
+    )
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -86,6 +117,7 @@ fun CurveEditorScreen(
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
+    val graphColors = curveGraphColors()
 
     var showDiscardDialog by remember { mutableStateOf(false) }
     var showPreview by remember { mutableStateOf(false) }
@@ -175,6 +207,7 @@ fun CurveEditorScreen(
                 CurveGraph(
                     points = state.points,
                     selectedId = state.selectedPointId,
+                    colors = graphColors,
                     onAddPoint = { viewModel.addPoint(it) },
                     onSelectPoint = { viewModel.selectPoint(it) },
                     onMovePointTime = { id, time -> viewModel.movePointTime(id, time) },
@@ -188,9 +221,9 @@ fun CurveEditorScreen(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    LegendItem("Warmth", WarmLineColor)
+                    LegendItem("Warmth", graphColors.warmth)
                     Spacer(modifier = Modifier.width(16.dp))
-                    LegendItem("Dimming", DimLineColor)
+                    LegendItem("Dimming", graphColors.dimming)
                     Spacer(modifier = Modifier.weight(1f))
                     Text(
                         text = "Tap to add • Drag to move",
@@ -306,6 +339,7 @@ fun CurveEditorScreen(
 private fun CurveGraph(
     points: List<CurvePointDraft>,
     selectedId: Long?,
+    colors: CurveGraphColors,
     onAddPoint: (Int) -> Unit,
     onSelectPoint: (Long?) -> Unit,
     onMovePointTime: (Long, Int) -> Unit,
@@ -382,7 +416,7 @@ private fun CurveGraph(
         for (i in 0..4) {
             val y = valueToY(i / 4f, h, insetPx)
             drawLine(
-                color = GridColor,
+                color = colors.grid,
                 start = Offset(insetPx, y),
                 end = Offset(w - insetPx, y),
                 strokeWidth = 1.dp.toPx(),
@@ -405,8 +439,8 @@ private fun CurveGraph(
                     dimPath.lineTo(x, dy)
                 }
             }
-            drawPath(dimPath, color = DimLineColor, style = Stroke(width = 2.dp.toPx()))
-            drawPath(warmPath, color = WarmLineColor, style = Stroke(width = 3.dp.toPx()))
+            drawPath(dimPath, color = colors.dimming, style = Stroke(width = 2.dp.toPx()))
+            drawPath(warmPath, color = colors.warmth, style = Stroke(width = 3.dp.toPx()))
         }
 
         sorted.forEach { p ->
@@ -416,11 +450,11 @@ private fun CurveGraph(
                     valueToY(p.warmth, h, insetPx),
                 )
             val radius = if (p.id == selectedId) 10.dp.toPx() else 7.dp.toPx()
-            drawCircle(color = WarmLineColor, radius = radius, center = center)
-            drawCircle(color = Color.White, radius = radius * 0.5f, center = center)
+            drawCircle(color = colors.warmth, radius = radius, center = center)
+            drawCircle(color = colors.pointCentre, radius = radius * 0.5f, center = center)
             if (p.id == selectedId) {
                 drawCircle(
-                    color = WarmLineColor,
+                    color = colors.warmth,
                     radius = radius + 3.dp.toPx(),
                     center = center,
                     style = Stroke(width = 2.dp.toPx()),

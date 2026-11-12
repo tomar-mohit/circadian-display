@@ -110,7 +110,8 @@ fun DashboardScreen(
                 }
             }
 
-            // Warmth & Dimming indicators
+            // Warmth & Dimming indicators. These swatches represent the adjusted *display*, not
+            // the app chrome, so their colours stay scheme-independent (DECISIONS.md #010, trap 3).
             if (state.hasActiveProfile) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -277,7 +278,8 @@ private fun ModeBadge(mode: DisplayMode) {
 
 @Composable
 private fun warmColor(warmth: Float): Color {
-    // Interpolate from neutral (cool white) to warm amber
+    // Interpolate from neutral (warm white) to deep amber. Represents the adjusted screen rather
+    // than app chrome, so it is intentionally identical in light and dark mode.
     val neutral = Color(0xFFFFF3E0) // warm white
     val amber = Color(0xFFFF9800) // deep amber
     return lerpColor(neutral, amber, warmth)

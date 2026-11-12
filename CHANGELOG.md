@@ -9,6 +9,21 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+## [2.0.0] - 2026-10-18
+
+### Added
+- In-app appearance setting (Settings → Appearance): **System**, **Light**, or **Dark**. System follows the device and is the default, including for existing installs, so nothing changes until the user chooses.
+- Dark colour scheme built on a warm carbon/amber palette. Light mode keeps the Material 3 baseline colours and is unchanged.
+
+### Changed
+- The status and navigation bars are now derived from the app's own resolved theme instead of the system night mode, so the window chrome cannot disagree with the content in either mode.
+- The window theme follows the system setting again (`DayNight`), so the launch frame matches the device's mode.
+
+### Fixed
+- Curve Editor: the graph grid, dimming curve, and point handles were hardcoded for a light background and were invisible or wrong in dark mode.
+
+## [1.0.4] - 2026-10-10
+
 ### Fixed
 - Status bar clock and icons are now legible on devices using the system dark mode. The window chrome previously followed the system's night mode while the in-app UI stayed light, which drew light status-bar glyphs on the app's near-white background (measured contrast ~1.03:1, against a 3:1 accessibility floor for UI components).
 - Removed the brief dark flash when launching the app on a device using the system dark mode: the window background now matches the app's light UI.

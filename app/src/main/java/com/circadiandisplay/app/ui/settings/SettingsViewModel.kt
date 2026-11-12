@@ -7,6 +7,7 @@ import android.provider.Settings
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.circadiandisplay.app.data.settings.AppSettings
+import com.circadiandisplay.app.data.settings.ThemeMode
 import com.circadiandisplay.app.scheduler.SchedulerWorker
 import com.circadiandisplay.core.curve.DisplayMode
 import com.circadiandisplay.system.nativemode.NativeDisplayController
@@ -41,11 +42,13 @@ class SettingsViewModel
         val uiState: StateFlow<SettingsUiState> =
             combine(
                 appSettings.displayMode,
+                appSettings.themeMode,
                 overlayPermissionGranted,
                 batteryOptimizationIgnored,
-            ) { mode, overlay, battery ->
+            ) { mode, theme, overlay, battery ->
                 SettingsUiState(
                     displayMode = mode,
+                    themeMode = theme,
                     nativeSupported = nativeController.isSupported(),
                     nativeApiSupported = nativeController.isApiSupported(),
                     nativePermissionGranted = nativeController.isWriteSecureSettingsGranted(),
@@ -101,6 +104,15 @@ class SettingsViewModel
                 // for the next periodic WorkManager cycle.
                 SchedulerWorker.triggerNow(application)
             }
+        }
+
+        /**
+         * Presentation only. Changing the theme is deliberately **not** a reason to re-evaluate the
+         * display, so unlike [setDisplayMode] this never calls [SchedulerWorker.triggerNow]
+         * (DECISIONS.md #010, trap 1).
+         */
+        fun setThemeMode(mode: ThemeMode) {
+            viewModelScope.launch { appSettings.setThemeMode(mode) }
         }
 
         private fun readOverlayPermission(): Boolean = Settings.canDrawOverlays(application)

@@ -136,7 +136,7 @@ Deferred to 2.0.0, together with the in-app theme work (DECISIONS.md #010).
 This is no longer optional polish. The status bar defect recorded in DECISIONS.md #009 (white glyphs on
 a `#FFFBFE` surface, ~1.03:1 contrast) was present in every release from 1.0.0 and was invisible to
 the entire unit test suite by construction. The theme work adds the same class of risk to the curve
-editor's grid lines and legend, which are currently hardcoded to a light background.
+editor's grid lines and legend, which were hardcoded to a light background until 2.0.0 made them scheme-aware; a regression there shows up as an invisible line rather than a crash.
 
 Render each screen in both colour schemes and assert on pixels. Consider Paparazzi or Roborazzi when
 introduced.
@@ -212,9 +212,16 @@ by screenshot when the graphic is ambiguous (see Screenshot Testing below).
 
 | Step | Expected Result |
 |---|---|
-| With the system in dark mode, open the app | Status bar clock, battery and Wi-Fi glyphs are dark and legible against the app's light surfaces (≥ 4.5:1 contrast, not white-on-white) |
-| With the system in light mode, open the app | Identical appearance to the dark-mode case — the app's own UI is light-only until the theme setting lands in 2.0.0 (DECISIONS.md #010) |
-| Launch the app with the system in dark mode | No dark window or splash frame before the light UI appears |
+| With the system in dark mode, open the app (Appearance = System) | App renders the dark scheme; status bar clock, battery and Wi-Fi glyphs are light and legible against it (>= 4.5:1) |
+| With the system in light mode, open the app (Appearance = System) | App renders the light scheme; glyphs are dark and legible against it |
+| With the system in dark mode, set Appearance = Light | App renders light with dark glyphs: the chrome follows the app, not the system |
+| With the system in light mode, set Appearance = Dark | App renders dark with light glyphs: the chrome follows the app, not the system |
+| Change Appearance while the app is open | The UI and the system bars update immediately, with no restart |
+| Toggle the system dark mode while Appearance = System | The app follows it without a restart |
+| Switch Appearance | No display re-evaluation: the master toggle and the applied curve are unchanged |
+| Launch with a saved override that opposes the system | At most one frame of system-coloured window chrome before the app's own (accepted, DECISIONS.md #010 trap 4) |
+| Open the Curve Editor in dark mode | Grid lines, dimming curve, and point handles are all visible against the dark canvas |
+| Launch the app | The launch frame matches the system's mode: no flash of the opposite scheme |
 | With gesture navigation, inspect the navigation bar area | The gesture handle is visible against the light content (API 27+; API 26 falls back to a dark bar by platform limitation) |
 
 ### Edge Cases

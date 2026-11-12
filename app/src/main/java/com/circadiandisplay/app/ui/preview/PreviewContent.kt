@@ -62,6 +62,7 @@ fun PreviewContent(
                 text = minutesToTimeString(timeMinutes),
                 style = MaterialTheme.typography.displaySmall,
                 fontWeight = FontWeight.Bold,
+                // Sits on the simulated panel above, not on an app surface, so it stays fixed.
                 color = Color.Black.copy(alpha = 0.65f),
             )
         }
@@ -127,7 +128,12 @@ private fun PreviewValueCard(
     }
 }
 
-/** Approximates the on-screen result: amber warmth layered over black dimming. */
+/**
+ * Approximates the on-screen result: amber warmth layered over black dimming.
+ *
+ * Deliberately scheme-independent. This simulates the physical display panel, not app chrome, so it
+ * must look identical in light and dark mode (DECISIONS.md #010, trap 3).
+ */
 fun previewColor(
     warmth: Float,
     dimming: Float,
