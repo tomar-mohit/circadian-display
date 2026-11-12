@@ -22,7 +22,7 @@ private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(na
  * Flat key-value settings backed by Jetpack DataStore (Preferences).
  *
  * Stores app-level configuration that has no relational structure:
- * display mode, master toggle, and diagnostics.
+ * display mode, master toggle, appearance, and diagnostics.
  *
  * The active profile is deliberately **not** tracked here — it lives in Room as
  * `CurveProfile.isActive`. A single source of truth avoids the two drifting out
@@ -38,6 +38,7 @@ class AppSettings
             val MODE = stringPreferencesKey("mode")
             val IS_ENABLED = booleanPreferencesKey("is_enabled")
             val LAST_EVALUATED_AT = longPreferencesKey("last_evaluated_at")
+            val THEME_MODE = stringPreferencesKey("theme_mode")
         }
 
         // ── Display Mode ──────────────────────────────────────────────────────
@@ -83,5 +84,21 @@ class AppSettings
 
         suspend fun setLastEvaluatedAt(timestampMs: Long) {
             context.dataStore.edit { it[Keys.LAST_EVALUATED_AT] = timestampMs }
+        }
+
+        // ── Appearance ────────────────────────────────────────────────────────
+
+        /**
+         * The app's own light/dark preference. A missing key resolves to [ThemeMode.default]
+         * (SYSTEM), so installs that predate this setting need no migration.
+         */
+        val themeMode: Flow<ThemeMode> =
+            context.dataStore.data.map { prefs -> ThemeMode.fromName(prefs[Keys.THEME_MODE]) }
+
+        suspend fun getThemeModeSnapshot(): ThemeMode =
+            ThemeMode.fromName(context.dataStore.data.first()[Keys.THEME_MODE])
+
+        suspend fun setThemeMode(mode: ThemeMode) {
+            context.dataStore.edit { it[Keys.THEME_MODE] = mode.name }
         }
     }

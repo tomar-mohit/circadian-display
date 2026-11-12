@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!--
-      The Compose UI is pinned to the light colour scheme (see DECISIONS.md #009), so the window
-      frame drawn before the first Compose frame must be light as well. With a DayNight parent, a
-      device in dark mode shows a dark splash/window background that snaps to a light app.
-      Revert to Theme.Material3.DayNight.NoActionBar when the in-app theme override lands
-      (DECISIONS.md #010).
+      Window theme for the frame drawn before the first Compose frame. The Compose UI owns the real
+      colour scheme (see ui/theme/Theme.kt), so this only has to agree with the *system* setting:
+      DayNight gives a dark launch frame on a dark device and a light one on a light device. A user
+      who overrides the theme against the system may see one frame in the system's colours before
+      Compose takes over - accepted in DECISIONS.md #010.
     -->
-    <style name="Theme.CircadianDisplay" parent="Theme.Material3.Light.NoActionBar" />
+    <style name="Theme.CircadianDisplay" parent="Theme.Material3.DayNight.NoActionBar" />
 </resources>
 

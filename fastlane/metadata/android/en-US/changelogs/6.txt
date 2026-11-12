@@ -1,0 +1,4 @@
+- New: dark theme, with a warm amber palette designed to be easy on the eyes in low light
+- New: Appearance setting - Light, Dark, or follow your device (System)
+- Light mode looks exactly as before; the app follows your device's dark mode by default
+- The status and navigation bars now always match the app's own theme
