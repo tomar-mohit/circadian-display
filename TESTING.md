@@ -48,6 +48,28 @@ Mockito or MockK may be used **only** for Android platform classes that cannot b
 
 Fakes are real implementations of the interface contract. They catch integration bugs that mocks miss. They are also far easier to maintain across refactors — a renamed method breaks a fake at compile time, not silently at runtime.
 
+### Event-Driven Scheduler (Exact Alarms)
+
+Verify the exact alarm pipeline introduced for issue #7. These tests are best performed on a physical device with a debugger or logcat access.
+
+| Test Case | Step | Expected Result |
+|---|---|---|
+| Alarm Registration | Enable app, set a profile with multiple points. | `adb shell dumpsys alarm` shows a `RTC_WAKEUP` alarm for `com.circadiandisplay.app` at the exact time of the next curve knee point. |
+| Alarm Firing | Wait for the knee time. | Logcat shows `AlarmReceiver: Exact alarm fired`. Display state updates immediately. |
+| Rescheduling | After the alarm fires. | `dumpsys alarm` shows the *following* knee point is now scheduled. |
+| Permission Handling | Revoke "Alarms & reminders" in system settings. | App detects status change. Settings screen shows "Updates may be delayed" row. App falls back to inexact `setAndAllowWhileIdle`. |
+| Clock/TZ Change | Change device time or timezone manually. | `AlarmReceiver` receives `TIME_SET` or `TIMEZONE_CHANGED`. Logcat shows `re-anchoring schedule`. Next alarm is recomputed for the new local time. |
+| Constant Curve | Set a profile with only one point or multiple identical points. | Logcat shows `No upcoming curve change`. Any pending exact alarm is cancelled. |
+
+### Overlay Opacity Hardening
+
+Verify the touch-occlusion fix for issue #8.
+
+| Test Case | Step | Expected Result |
+|---|---|---|
+| Touch Transparency | Set warmth 100%, dimming 100% in Overlay mode. | Dashboard and system buttons (back, home, recents) remain touchable. `dumpsys input` shows the overlay window with `alpha` approximately 0.79 or less (on API 31+). |
+| Opacity Clamping | Set 90% dimming. | The warmth effect is visually reduced to keep the combined opacity within the 0.8 safety limit. |
+
 ---
 
 ## Unit Tests

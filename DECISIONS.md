@@ -599,3 +599,107 @@ follows a device-level switch without a restart.
 Note on trap 2: the graph colours are resolved through `currentSchemeIsDark()`, which reads the
 *scheme* rather than the system setting. That keeps the editor correct when the theme overrides the
 system, and it is the reason the check belongs in composition rather than in a file-level constant.
+
+---
+
+# Decision 011
+
+Date:
+2026-11-13
+
+Status:
+Accepted
+
+Context:
+
+GitHub issue #7 reports that in NATIVE mode, display updates can be deferred for hours when the
+device is in Doze, particularly on strict ROMs like GrapheneOS. The existing 15-minute periodic
+WorkManager job is subject to JobScheduler batching and power-management deferral, which is
+unacceptable for a scheduled display adjustment.
+
+Decision:
+
+Implement event-driven exact alarms via `AlarmManager` for curve updates.
+
+1. **`CurveSchedule`**: Pure Kotlin logic to compute the next "knee point" (the next instant the
+   rendered display state actually changes) for a given curve and time.
+2. **`SchedulerAlarms`**: Schedules the next evaluation using `setExactAndAllowWhileIdle`. It
+   reschedules after every evaluation, every curve edit, and every toggle change.
+3. **`AlarmReceiver`**: A broadcast receiver that handles the exact alarm, triggers evaluation
+   via `CurveEvaluator`, and immediately schedules the next knee.
+4. **Permissions**: Uses `SCHEDULE_EXACT_ALARM`. On API 31+, this is a user-grantable permission;
+   the app uses `canScheduleExactAlarms()` to detect status and falls back to an inexact
+   `setAndAllowWhileIdle` window when denied. A row in Settings allows the user to grant it.
+5. **Fallback**: The periodic WorkManager job is kept as a secondary safety net.
+
+Consequences:
+
+Benefits:
+
+* Updates fire exactly on time, even in deep Doze, solving issue #7.
+* More efficient: no polling at 15-min intervals when the curve is constant or has long gaps
+  between knees.
+* Resilient: re-arms on boot and after clock/timezone changes.
+
+Costs:
+
+* Requires an additional permission (`SCHEDULE_EXACT_ALARM`).
+* On Android 13+, the permission is denied by default for store-installed apps, requiring user
+  education (the new Settings row).
+* Adds complexity (new receiver, more states to manage).
+
+Rationale:
+
+Predictability is paramount for a circadian scheduler. Polling is a poor fit for a deterministic
+curve. Exact alarms are the platform's intended tool for time-critical state changes.
+
+---
+
+# Decision 012
+
+Date:
+2026-11-13
+
+Status:
+Accepted
+
+Context:
+
+GitHub issue #8 reports that in OVERLAY mode, touch input is blocked on some devices (e.g., realme
+GT7 / Android 16) when warmth and dimming are high. Android's touch-occlusion protection blocks
+touches to a window if its combined opacity (from windows layered above it) exceeds a threshold,
+typically 0.8. Our `OverlayDisplayController` previously drew two layers (warmth and dimming), each
+potentially reaching high alpha, which could compound to an opacity > 0.8 and block touches to the
+apps below.
+
+Decision:
+
+Implement an `OverlayOpacityPolicy` to clamp the combined opacity of the overlay layers.
+
+1. **Combined Limit**: The total presented opacity (alpha) of the overlay window is capped at
+   `MAX_COMBINED_OPACITY` (0.8).
+2. **Prioritisation**: Dimming is prioritized; the remaining budget is given to warmth.
+3. **Safety Margin**: On API 31+, the window alpha is set to 0.79 to provide a 1.25% safety margin
+   below the typical 0.8 ceiling, avoiding "near-miss" blocking.
+4. **Mode Enforcement**: On API 31+, the window is explicitly tagged with
+   `FLAG_NOT_TOUCHABLE`, but the system still enforces opacity limits to prevent tapjacking.
+
+Consequences:
+
+Benefits:
+
+* Ensures the app never accidentally blocks system or app touches, even at 100%/100% settings.
+* Contract compliance with Android's touch-occlusion security model.
+
+Costs:
+
+* At extreme settings (e.g., 90% dimming), the warmth effect is reduced to stay within the budget.
+  This is a necessary tradeoff for usability.
+
+Rationale:
+
+The primary function of the app is to be a background filter; it must never interfere with the
+primary use of the device (touch). Hardening the opacity logic is the correct fix even if the
+threshold varies by OEM.
+
+---
