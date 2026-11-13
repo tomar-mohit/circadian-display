@@ -22,6 +22,12 @@
     <!-- Restart scheduler after device reboot -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
+    <!-- Exact alarms at curve knee points (issue #7). Normal manifest
+         permission on API < 31; on API 31+ additionally requires the user to
+         grant "Alarms & reminders" in Settings, otherwise an inexact alarm
+         fallback is used. -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+
     <!-- Request exemption from battery optimization -->
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
 
@@ -77,6 +83,18 @@
             android:exported="false">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+
+        <!-- Exact-alarm evaluation + clock/timezone re-anchoring (issue #7).
+             Both system actions are protected broadcasts, so exported=false is
+             still deliverable. -->
+        <receiver
+            android:name=".scheduler.AlarmReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+                <action android:name="android.intent.action.TIME_SET" />
             </intent-filter>
         </receiver>
     </application>

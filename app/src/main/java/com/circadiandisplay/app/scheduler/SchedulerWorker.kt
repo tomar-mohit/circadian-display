@@ -10,16 +10,8 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
-import com.circadiandisplay.app.data.repository.CurveRepository
-import com.circadiandisplay.app.data.repository.ExclusionRepository
-import com.circadiandisplay.app.data.settings.AppSettings
-import com.circadiandisplay.app.foreground.ForegroundAppProvider
-import com.circadiandisplay.core.curve.CurveEngine
-import com.circadiandisplay.core.curve.DisplayController
-import com.circadiandisplay.core.curve.DisplayState
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
-import java.util.Calendar
 import java.util.concurrent.TimeUnit
 
 /**
@@ -29,34 +21,30 @@ import java.util.concurrent.TimeUnit
  * Scheduled via WorkManager with a ~15-minute interval.
  * Re-enqueues after device reboot via [BootReceiver].
  *
- * ## Edge cases handled
- *
- * - **Disabled**: Clears the display and returns success.
- * - **Excluded app in foreground**: Clears the display and returns success.
- * - **No active profile**: Clears the display and returns success.
- * - **Empty profile**: CurveEngine returns safe default (0, 0).
- * - **WorkManager deferral**: No special handling — the next cycle will simply
- *   evaluate against the then-current time.
+ * WorkManager defers periodic work for hours under Doze (issue #7), so this
+ * job doubles as a safety net: the precise, event-driven updates come from
+ * [SchedulerAlarms] exact alarms at curve knee points. After every successful
+ * evaluation the next exact alarm is re-armed here, which also covers UI
+ * triggers (toggle, profile edit, mode switch) that run through this worker.
  */
 @HiltWorker
-// 8 injected dependencies is idiomatic for a Hilt-assisted CoroutineWorker.
-@Suppress("LongParameterList")
 class SchedulerWorker
     @AssistedInject
     constructor(
         @Assisted appContext: Context,
         @Assisted workerParams: WorkerParameters,
-        private val curveRepository: CurveRepository,
-        private val appSettings: AppSettings,
-        private val curveEngine: CurveEngine,
-        private val displayController: DisplayController,
-        private val exclusionRepository: ExclusionRepository,
-        private val foregroundAppProvider: ForegroundAppProvider,
+        private val curveEvaluator: CurveEvaluator,
+        private val schedulerAlarms: SchedulerAlarms,
     ) : CoroutineWorker(appContext, workerParams) {
         @Suppress("TooGenericExceptionCaught")
         override suspend fun doWork(): Result {
             return try {
-                evaluateAndApply()
+                // Re-arm the exact alarm after every evaluation so schedule
+                // changes made via this worker (toggle, profile activation,
+                // curve edits, mode switch) are picked up immediately.
+                // scheduleNext() cancels itself when the display was cleared.
+                curveEvaluator.evaluateAndApply()
+                schedulerAlarms.scheduleNext()
                 Result.success()
             } catch (e: Exception) {
                 // Catching broadly here is intentional: WorkManager workers must
@@ -64,57 +52,6 @@ class SchedulerWorker
                 Log.e(TAG, "Scheduler evaluation failed", e)
                 Result.retry()
             }
-        }
-
-        private suspend fun evaluateAndApply() {
-            // 1. Check if the master toggle is on
-            val enabled = appSettings.isEnabledSnapshot()
-            if (!enabled) {
-                Log.d(TAG, "Disabled — clearing display")
-                displayController.clear()
-                appSettings.setLastEvaluatedAt(System.currentTimeMillis())
-                return
-            }
-
-            // 2. If an excluded app is in the foreground, suspend adjustments.
-            //    Without Usage Access, currentForegroundPackage() returns null and
-            //    exclusions fail open (the display keeps updating as normal).
-            val foregroundPackage = foregroundAppProvider.currentForegroundPackage()
-            if (foregroundPackage != null && exclusionRepository.isExcluded(foregroundPackage)) {
-                Log.d(TAG, "Excluded app in foreground ($foregroundPackage) — clearing display")
-                displayController.clear()
-                appSettings.setLastEvaluatedAt(System.currentTimeMillis())
-                return
-            }
-
-            // 3. Find the active profile (tracked in Room via CurveProfile.isActive)
-            val profile = curveRepository.getActiveProfile()
-            if (profile == null) {
-                Log.d(TAG, "No active profile — clearing display")
-                displayController.clear()
-                appSettings.setLastEvaluatedAt(System.currentTimeMillis())
-                return
-            }
-
-            // 4. Load points and evaluate
-            val points = curveRepository.getPointsByProfileIdOnce(profile.id)
-            val now = currentTimeMinutes()
-            val state = curveEngine.calculateDisplayState(profile, points, now)
-
-            Log.d(
-                TAG,
-                "Evaluated: time=$now (${"%02d:%02d".format(now / 60, now % 60)}), " +
-                    "warmth=${"%.2f".format(state.warmth)}, dimming=${"%.2f".format(state.dimming)}",
-            )
-
-            // 5. Apply to display
-            displayController.apply(state)
-            appSettings.setLastEvaluatedAt(System.currentTimeMillis())
-        }
-
-        private fun currentTimeMinutes(): Int {
-            val cal = Calendar.getInstance()
-            return cal.get(Calendar.HOUR_OF_DAY) * 60 + cal.get(Calendar.MINUTE)
         }
 
         companion object {

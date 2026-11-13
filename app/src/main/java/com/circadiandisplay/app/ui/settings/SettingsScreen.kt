@@ -265,6 +265,34 @@ fun SettingsScreen(
                             Text("Allow background activity")
                         }
                     }
+
+                    if (state.exactAlarmRowVisible) {
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        PermissionRow(
+                            title = "Alarms & reminders",
+                            granted = state.exactAlarmAllowed,
+                            grantedText = "Allowed",
+                            deniedText = "Updates may be delayed by hours",
+                        )
+                        if (!state.exactAlarmAllowed) {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            OutlinedButton(
+                                onClick = { requestExactAlarmPermission(context) },
+                                modifier = Modifier.fillMaxWidth(),
+                            ) {
+                                Text("Allow exact alarms")
+                            }
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text =
+                                    "Lets the app switch warmth at the exact minute your " +
+                                        "curve changes, even in deep sleep.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    }
                 }
             }
 
@@ -429,6 +457,15 @@ private fun requestBatteryOptimizationExemption(context: Context) {
     val intent =
         Intent(
             Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
+            Uri.parse("package:${context.packageName}"),
+        )
+    context.startActivity(intent)
+}
+
+private fun requestExactAlarmPermission(context: Context) {
+    val intent =
+        Intent(
+            Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM,
             Uri.parse("package:${context.packageName}"),
         )
     context.startActivity(intent)
