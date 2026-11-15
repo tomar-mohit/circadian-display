@@ -1,0 +1,2 @@
+- Fix: Native Mode no longer blacks out the screen on some Samsung devices when warmth is above 0 (#1).
+- Native Mode now prefers the validated system APIs and rejects unsafe color temperatures.

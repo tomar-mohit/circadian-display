@@ -9,6 +9,12 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+## [2.0.2] - 2026-11-15
+
+### Fixed
+- Native Mode: corrected the reflection API names for Android 11+ and reordered the control strategy to use the validated system manager before raw settings writes. This prevents the black screen reported on Samsung devices when warmth is above 0 (Fixes #1).
+- Native Mode: the resolved color-temperature range is now sanity-checked (1,000 K floor), so an unsafe near-0 K value can never reach the display driver.
+
 ## [2.0.1] - 2026-11-13
 
 ### Fixed
