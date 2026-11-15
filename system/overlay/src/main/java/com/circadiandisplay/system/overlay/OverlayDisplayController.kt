@@ -54,10 +54,15 @@ import javax.inject.Singleton
  * - **Warmth layer** (drawn on top): amber (#FFB300) with effective opacity
  *   `warmth * MAX_WARMTH_ALPHA`.
  *
- * The window-level alpha is kept at the system maximum obscuring opacity (0.8
- * on API 31+). To keep the *net* visual effect identical to an opaque window,
- * the layer alphas are divided by the window alpha before drawing, so the
- * on-screen result is unchanged (only dimming above 0.8 is capped).
+ * The window-level alpha is kept just below the system maximum obscuring
+ * opacity (0.8 on API 31+, with a small safety margin). The *combined*
+ * presented opacity of both layers is additionally clamped by
+ * [OverlayOpacityPolicy], because the layers compound inside the window
+ * (dimming 0.5 + warmth 0.5 presents a net opacity of 0.75, and higher
+ * combinations exceed the ceiling outright). Some OEM input stacks (realme /
+ * ColorOS on Android 16) block touches when the presented combined opacity of
+ * an overlay window is above the ceiling, even though the platform itself
+ * only measures the window-level alpha — issue #8.
  */
 @Singleton
 class OverlayDisplayController
@@ -74,16 +79,18 @@ class OverlayDisplayController
          * Window-level alpha, fixed at creation.
          *
          * On API 31+ this is clamped to the system maximum obscuring opacity
-         * for touch pass-through so the overlay never blocks touches or system
-         * navigation gestures. On earlier releases there is no such limit, so
-         * the window stays fully opaque.
+         * for touch pass-through, with a small safety margin below it so
+         * window-level comparisons with `>=` and OEMs that measure the
+         * presented content (rather than the window alpha) still pass touches
+         * through. On earlier releases there is no such limit, so the window
+         * stays fully opaque.
          */
         private val windowAlpha: Float =
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 val max =
                     context.getSystemService(InputManager::class.java)
                         ?.maximumObscuringOpacityForTouch
-                max?.coerceIn(0f, 1f) ?: DEFAULT_MAX_OBSCURING_OPACITY
+                ((max ?: DEFAULT_MAX_OBSCURING_OPACITY).coerceIn(0f, 1f)) * TOUCH_CEILING_MARGIN
             } else {
                 1f
             }
@@ -114,14 +121,20 @@ class OverlayDisplayController
             val warmth = state.warmth.coerceIn(0f, 1f)
             val dimming = state.dimming.coerceIn(0f, 1f)
 
-            // Divide by the window alpha so the net on-screen opacity equals the
-            // requested value (a window alpha of 0.8 with a layer drawn at x/0.8
-            // renders at exactly x on screen, up to the 0.8 ceiling).
-            val compensation = 1f / windowAlpha
+            // Resolve the presented opacities of both layers so their combined
+            // opacity never exceeds the pass-through ceiling (issue #8), then
+            // divide by the window alpha to get the in-window drawing alphas
+            // (a layer drawn at x/windowAlpha renders at exactly x on screen).
+            val (presentedDimming, presentedWarmth) =
+                OverlayOpacityPolicy.clamp(
+                    dimming = dimming,
+                    warmth = warmth * MAX_WARMTH_ALPHA,
+                    ceiling = windowAlpha,
+                )
 
             val view = getOrCreateOverlayView()
-            view.dimmingAlpha = (dimming * compensation).coerceIn(0f, 1f)
-            view.warmthAlpha = (warmth * MAX_WARMTH_ALPHA * compensation).coerceIn(0f, 1f)
+            view.dimmingAlpha = (presentedDimming / windowAlpha).coerceIn(0f, 1f)
+            view.warmthAlpha = (presentedWarmth / windowAlpha).coerceIn(0f, 1f)
             view.invalidate()
         }
 
@@ -201,6 +214,14 @@ class OverlayDisplayController
 
             /** Android 12+ default maximum obscuring opacity for touch pass-through. */
             private const val DEFAULT_MAX_OBSCURING_OPACITY = 0.8f
+
+            /**
+             * Safety margin applied to the touch pass-through ceiling. Keeps
+             * the overlay strictly below the limit to tolerate OEM input
+             * stacks that measure the presented content (issue #8) instead of
+             * the window-level alpha, or that compare with `>=`.
+             */
+            private const val TOUCH_CEILING_MARGIN = 0.95f
         }
 
         /**

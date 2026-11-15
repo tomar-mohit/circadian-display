@@ -18,6 +18,11 @@ import com.circadiandisplay.core.curve.DisplayMode
  *                                      via ADB.
  * @property overlayPermissionGranted   Whether SYSTEM_ALERT_WINDOW is granted.
  * @property batteryOptimizationIgnored Whether the app is exempt from battery optimization.
+ * @property exactAlarmRowVisible       Whether the exact-alarms row should be
+ *                                      shown (Android 12+ only; earlier
+ *                                      releases grant exact alarms by default).
+ * @property exactAlarmAllowed          Whether the user allows exact alarms
+ *                                      ("Alarms & reminders" special access).
  */
 data class SettingsUiState(
     val displayMode: DisplayMode = DisplayMode.OVERLAY,
@@ -27,4 +32,6 @@ data class SettingsUiState(
     val nativePermissionGranted: Boolean = false,
     val overlayPermissionGranted: Boolean = false,
     val batteryOptimizationIgnored: Boolean = false,
+    val exactAlarmRowVisible: Boolean = false,
+    val exactAlarmAllowed: Boolean = true,
 )

@@ -1,7 +1,9 @@
 package com.circadiandisplay.app.ui.settings
 
+import android.app.AlarmManager
 import android.app.Application
 import android.content.Context
+import android.os.Build
 import android.os.PowerManager
 import android.provider.Settings
 import androidx.lifecycle.ViewModel
@@ -36,6 +38,7 @@ class SettingsViewModel
     ) : ViewModel() {
         private val overlayPermissionGranted = MutableStateFlow(readOverlayPermission())
         private val batteryOptimizationIgnored = MutableStateFlow(readBatteryOptimization())
+        private val exactAlarmAllowed = MutableStateFlow(readExactAlarmAllowed())
         private val _events = MutableSharedFlow<SettingsEvent>(extraBufferCapacity = 1)
         val events = _events.asSharedFlow()
 
@@ -45,7 +48,8 @@ class SettingsViewModel
                 appSettings.themeMode,
                 overlayPermissionGranted,
                 batteryOptimizationIgnored,
-            ) { mode, theme, overlay, battery ->
+                exactAlarmAllowed,
+            ) { mode, theme, overlay, battery, exact ->
                 SettingsUiState(
                     displayMode = mode,
                     themeMode = theme,
@@ -54,6 +58,8 @@ class SettingsViewModel
                     nativePermissionGranted = nativeController.isWriteSecureSettingsGranted(),
                     overlayPermissionGranted = overlay,
                     batteryOptimizationIgnored = battery,
+                    exactAlarmRowVisible = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S,
+                    exactAlarmAllowed = exact,
                 )
             }.stateIn(
                 scope = viewModelScope,
@@ -71,6 +77,7 @@ class SettingsViewModel
             val battery = readBatteryOptimization()
             overlayPermissionGranted.value = overlay
             batteryOptimizationIgnored.value = battery
+            exactAlarmAllowed.value = readExactAlarmAllowed()
 
             // If native mode was selected previously but permission is revoked,
             // revert setting to OVERLAY to avoid a false state.
@@ -121,4 +128,15 @@ class SettingsViewModel
             val powerManager = application.getSystemService(Context.POWER_SERVICE) as PowerManager
             return powerManager.isIgnoringBatteryOptimizations(application.packageName)
         }
+
+        /**
+         * Whether exact alarms may be scheduled. Always true before Android 12
+         * (the manifest permission suffices there).
+         */
+        private fun readExactAlarmAllowed(): Boolean =
+            Build.VERSION.SDK_INT < Build.VERSION_CODES.S ||
+                exactAlarmManager().canScheduleExactAlarms()
+
+        private fun exactAlarmManager(): AlarmManager =
+            application.getSystemService(Context.ALARM_SERVICE) as AlarmManager
     }

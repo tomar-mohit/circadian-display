@@ -9,6 +9,12 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+## [2.0.1] - 2026-11-13
+
+### Fixed
+- Background updates in Native mode are now driven by exact alarms (Fixes #7). On strict devices like GrapheneOS or those with aggressive OEM power management, the previous periodic job could be deferred for hours. The app now schedules the next curve change precisely, keeping the periodic job only as a fallback.
+- Touches are no longer blocked when using Overlay mode with high warmth and dimming settings on some Android 15/16 devices (Fixes #8). The app now ensures the combined opacity of the overlay layers never exceeds the system's touch-blocking threshold.
+
 ## [2.0.0] - 2026-10-18
 
 ### Added
