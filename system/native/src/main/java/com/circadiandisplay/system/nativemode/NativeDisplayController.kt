@@ -81,7 +81,11 @@ class NativeDisplayController
          * The device's supported night-display color temperature range in
          * Kelvin, resolved once from the framework config resources.
          */
-        private val colorTemperatureRange: IntRange by lazy { resolveColorTemperatureRange() }
+        private val colorTemperatureRange: IntRange by lazy {
+            val range = resolveColorTemperatureRange()
+            Log.d(TAG, "Resolved native range: ${range.first}K to ${range.last}K")
+            range
+        }
 
         // ── DisplayController contract ────────────────────────────────────────
 
@@ -139,6 +143,8 @@ class NativeDisplayController
             setNightDisplayAutoMode(false)
 
             // 2. Set the desired color temperature
+            //    We set the temperature BEFORE activating to ensure the first frame
+            //    isn't using a stale or driver-crashing default value.
             setNightDisplayColorTemperature(colorTemp)
 
             // 3. Activate night display
@@ -174,23 +180,32 @@ class NativeDisplayController
          */
         private fun resolveColorTemperatureRange(): IntRange {
             val res = context.resources
-            val min =
+            var min =
                 readFrameworkColorTemperature(
                     res,
                     FRAMEWORK_MIN_TEMP_RES,
                     DEFAULT_MIN_COLOR_TEMPERATURE,
                 )
-            val max =
+            var max =
                 readFrameworkColorTemperature(
                     res,
                     FRAMEWORK_MAX_TEMP_RES,
                     DEFAULT_MAX_COLOR_TEMPERATURE,
                 )
-            return if (min in 1 until max) {
-                min..max
-            } else {
-                DEFAULT_MIN_COLOR_TEMPERATURE..DEFAULT_MAX_COLOR_TEMPERATURE
+
+            // HARDENING: ensure the range is sane. Writing 0K to Settings.Secure
+            // is known to crash the display matrix (black screen) on some Samsung
+            // devices. AOSP default is 2596K; we use 1000K as a absolute floor.
+            if (min < 1000) {
+                Log.w(TAG, "Framework reported unsafe min temp ($min K), using default")
+                min = DEFAULT_MIN_COLOR_TEMPERATURE
             }
+            if (max <= min) {
+                Log.w(TAG, "Framework reported invalid range ($min-$max K), using default")
+                max = DEFAULT_MAX_COLOR_TEMPERATURE
+            }
+
+            return min..max
         }
 
         private fun readFrameworkColorTemperature(
@@ -205,81 +220,104 @@ class NativeDisplayController
                 fallback
             }
 
-        // ── Night display controls (Settings.Secure primary → reflection fallback) ────
+        // ── Night display controls (Reflection primary → Settings.Secure fallback) ────
 
         private fun setNightDisplayAutoMode(enabled: Boolean) {
-            try {
-                Settings.Secure.putInt(
-                    context.contentResolver,
-                    KEY_NIGHT_DISPLAY_AUTO_MODE,
-                    if (enabled) 1 else AUTO_MODE_DISABLED,
-                )
-            } catch (e: Exception) {
-                Log.w(TAG, "Settings.Secure write failed for auto mode: ${e.message}, trying reflection")
+            val autoMode = if (enabled) 1 else AUTO_MODE_DISABLED
+            // Try reflection first (safer, validates range)
+            val reflected =
                 tryReflection(
-                    "setNightDisplayAutoMode",
+                    listOf("setAutoMode", "setNightDisplayAutoMode"),
                     arrayOf(Int::class.java),
-                    arrayOf(if (enabled) 1 else AUTO_MODE_DISABLED),
+                    arrayOf(autoMode),
                 )
+
+            if (!reflected) {
+                try {
+                    Settings.Secure.putInt(
+                        context.contentResolver,
+                        KEY_NIGHT_DISPLAY_AUTO_MODE,
+                        autoMode,
+                    )
+                } catch (e: Exception) {
+                    Log.w(TAG, "Fallback Settings.Secure write failed for auto mode: ${e.message}")
+                }
             }
         }
 
         private fun setNightDisplayActivated(activated: Boolean) {
-            try {
-                Settings.Secure.putInt(
-                    context.contentResolver,
-                    KEY_NIGHT_DISPLAY_ACTIVATED,
-                    if (activated) 1 else 0,
-                )
-            } catch (e: Exception) {
-                Log.w(TAG, "Settings.Secure write failed for activated: ${e.message}, trying reflection")
+            // Try reflection first (safer)
+            val reflected =
                 tryReflection(
-                    "setNightDisplayActivated",
+                    listOf("setActivated", "setNightDisplayActivated"),
                     arrayOf(Boolean::class.java),
                     arrayOf(activated),
                 )
+
+            if (!reflected) {
+                try {
+                    Settings.Secure.putInt(
+                        context.contentResolver,
+                        KEY_NIGHT_DISPLAY_ACTIVATED,
+                        if (activated) 1 else 0,
+                    )
+                } catch (e: Exception) {
+                    Log.w(TAG, "Fallback Settings.Secure write failed for activated: ${e.message}")
+                }
             }
         }
 
         private fun setNightDisplayColorTemperature(colorTemp: Int) {
-            try {
-                Settings.Secure.putInt(
-                    context.contentResolver,
-                    KEY_NIGHT_DISPLAY_COLOR_TEMPERATURE,
-                    colorTemp,
-                )
-            } catch (e: Exception) {
-                Log.w(TAG, "Settings.Secure write failed for temperature: ${e.message}, trying reflection")
+            // Try reflection first (safer, validates range)
+            val reflected =
                 tryReflection(
-                    "setNightDisplayColorTemperature",
+                    listOf("setColorTemperature", "setNightDisplayColorTemperature"),
                     arrayOf(Int::class.java),
                     arrayOf(colorTemp),
                 )
+
+            if (!reflected) {
+                try {
+                    Settings.Secure.putInt(
+                        context.contentResolver,
+                        KEY_NIGHT_DISPLAY_COLOR_TEMPERATURE,
+                        colorTemp,
+                    )
+                } catch (e: Exception) {
+                    Log.w(TAG, "Fallback Settings.Secure write failed for temperature: ${e.message}")
+                }
             }
         }
 
         /**
          * Attempts to invoke a hidden method on [colorDisplayManager] via reflection.
+         * Tries multiple [methodNames] to account for AOSP version changes (e.g.
+         * 'setColorTemperature' vs 'setNightDisplayColorTemperature').
          *
-         * @return `true` if the reflection call succeeded, `false` otherwise.
+         * @return `true` if any reflection call succeeded, `false` otherwise.
          */
         private fun tryReflection(
-            methodName: String,
+            methodNames: List<String>,
             paramTypes: Array<Class<*>>,
             args: Array<Any>,
         ): Boolean {
             if (colorDisplayManager == null) return false
-            return try {
-                val method = colorDisplayManager!!.javaClass.getMethod(methodName, *paramTypes)
-                method.invoke(colorDisplayManager, *args)
-                true
-            } catch (e: NoSuchMethodException) {
-                Log.w(TAG, "Hidden API unavailable: $methodName — falling back to Settings.Secure")
-                false
-            } catch (e: Exception) {
-                Log.w(TAG, "Reflection call failed: $methodName", e)
-                false
+            for (name in methodNames) {
+                try {
+                    val method = colorDisplayManager!!.javaClass.getMethod(name, *paramTypes)
+                    method.invoke(colorDisplayManager, *args)
+                    return true
+                } catch (e: NoSuchMethodException) {
+                    // Continue to next name
+                } catch (e: SecurityException) {
+                    Log.d(TAG, "Reflection access denied for $name (expected on non-system builds)")
+                    return false
+                } catch (e: Exception) {
+                    Log.w(TAG, "Reflection call failed: $name", e)
+                    return false
+                }
             }
+            return false
         }
 
         companion object {

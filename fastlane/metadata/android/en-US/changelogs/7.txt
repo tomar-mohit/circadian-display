@@ -1,2 +1,3 @@
 - Hardening: Clamp combined overlay opacity below touch pass-through ceiling (Fixes #8).
 - Fix: Use exact alarms for background curve updates in Native mode (Fixes #7).
+- Fix: Improved Native mode reliability and fixed "Black screen" on Samsung devices (Fixes #1).

@@ -703,3 +703,52 @@ primary use of the device (touch). Hardening the opacity logic is the correct fi
 threshold varies by OEM.
 
 ---
+
+# Decision 013
+
+Date:
+2026-11-15
+
+Status:
+Accepted
+
+Context:
+
+GitHub issue #1 reports a "Black screen" when using NATIVE mode on Samsung devices (Galaxy A56,
+Android 16). Deep inspection of the `NativeDisplayController` revealed three flaws:
+1. Reflection used incorrect method names (modern AOSP uses shorter names).
+2. The strategy order was "Settings.Secure first", which bypasses system validation.
+3. The range discovery from framework resources could return 0K, which crashes the display
+   driver on some OEMs.
+
+Decision:
+
+Harden `NativeDisplayController` for Native Mode reliability.
+
+1. **Reflection-First**: Always attempt to use `ColorDisplayManager` (safer, validated) before
+   falling back to raw `Settings.Secure` writes.
+2. **Corrected Method Names**: Try both modern (`setColorTemperature`) and legacy
+   (`setNightDisplayColorTemperature`) names.
+3. **Range Hardening**: Enforce a 1000K absolute floor on the discovered range to prevent writing
+   `0K` to the system.
+4. **Sequencing**: Set the temperature *before* activation in the `apply()` pipeline to ensure
+   valid state from the first frame.
+
+Consequences:
+
+Benefits:
+
+* Prevents "Black screen" matrix failures on Samsung and other strict OEMs.
+* Improved compliance with Decision 008 (Primary vs Fallback paths).
+* Better logging for diagnosing OEM-specific display driver quirks.
+
+Costs:
+
+* Increased code complexity in the reflection layer.
+
+Rationale:
+
+Native mode involves interacting with undocumented system behavior. The safest path is to use
+the system's own manager classes, which provide validation that direct database writes lack.
+
+---
